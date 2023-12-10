@@ -1,19 +1,34 @@
-# Build thor in a stock Go builder container
-FROM golang:alpine as builder
+FROM golang:1.18-alpine AS base
 
-RUN apk add --no-cache make gcc musl-dev linux-headers git
-WORKDIR  /go/thor
-COPY . /go/thor
-RUN make all
+# Set up dependencies
+ENV PACKAGES git openssh-client build-base
 
-# Pull thor into a second stage deploy alpine container
-FROM alpine:latest
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
-RUN apk add --no-cache ca-certificates
-COPY --from=builder /go/thor/bin/thor /usr/local/bin/
-COPY --from=builder /go/thor/bin/disco /usr/local/bin/
-RUN adduser -D -s /bin/ash thor
-USER thor
 
-EXPOSE 8669 11235 11235/udp 55555/udp
-ENTRYPOINT ["thor"]
+# Install dependencies
+RUN apk add --update $PACKAGES
+
+# Add source files
+RUN mkdir -p ./thor
+COPY ./ ./thor/
+
+RUN go env -w GOPROXY="https://goproxy.cn,direct"
+
+
+FROM base AS build
+
+RUN  cd thor && make && cp ./bin/thor /usr/bin/thor
+
+FROM alpine
+
+WORKDIR /root
+
+COPY  --from=build /usr/bin/thor /usr/bin/thor
+
+# Add entrypoint script
+COPY ./deploy/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod u+x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
+
