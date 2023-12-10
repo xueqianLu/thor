@@ -6,6 +6,7 @@ THOR_VERSION = $(shell cat cmd/thor/VERSION)
 DISCO_VERSION = $(shell cat cmd/disco/VERSION)
 
 PACKAGES = `go list ./... | grep -v '/vendor/'`
+TAG ?= latest
 
 MAJOR = $(shell go version | cut -d' ' -f3 | cut -b 3- | cut -d. -f1)
 MINOR = $(shell go version | cut -d' ' -f3 | cut -b 3- | cut -d. -f2)
@@ -22,6 +23,9 @@ disco:| go_version_check
 	@echo "building $@..."
 	@go build -v -o $(CURDIR)/bin/$@ -ldflags "-X main.version=$(DISCO_VERSION) -X main.gitCommit=$(GIT_COMMIT) -X main.gitTag=$(GIT_TAG)" ./cmd/disco
 	@echo "done. executable created at 'bin/$@'"
+docker:
+	@echo "build docker image"
+	@docker build -t thor:${TAG} .
 
 dep:| go_version_check
 	@go mod download
@@ -37,7 +41,7 @@ go_version_check:
 		fi \
 	fi
 
-all: thor disco
+all: thor disco docker
 
 clean:
 	-rm -rf \
