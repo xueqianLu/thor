@@ -8,17 +8,19 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/vechain/thor/api/transactions"
-	"github.com/vechain/thor/genesis"
+	"github.com/vechain/thor/thor"
 	"github.com/vechain/thor/tx"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"net/http"
+	"time"
 )
 
 var (
 	accountFile  = flag.String("account", "/root/account.json", "account file")
 	accountIndex = flag.Int("index", 0, "account index")
-	url          = flag.String("url", "", "node rpc url")
+	url          = flag.String("url", "http://127.0.0.1:8669", "node rpc url")
 )
 
 type AccountInfo struct {
@@ -26,23 +28,55 @@ type AccountInfo struct {
 	Private string `json:"private"`
 }
 
-func main() {
+const (
+	chainTag = 0xEB
+)
 
+// implement function load account
+func loadAccount() *AccountInfo {
+	data, err := ioutil.ReadFile(*accountFile)
+	if err != nil {
+		log.Fatalf("ioutil.ReadFile: %v", err)
+	}
+	var accounts []*AccountInfo
+	if err = json.Unmarshal(data, &accounts); err != nil {
+		log.Fatalf("loadAccount json.Unmarshal: %v", err)
+	}
+	return accounts[*accountIndex]
 }
 
-func senTx(url string) {
-	var blockRef = tx.NewBlockRef(0)
-	var chainTag = repo.ChainTag()
-	var expiration = uint32(10)
-	var gas = uint64(21000)
+func main() {
+	flag.Parse()
+	account := loadAccount()
+	tc := time.NewTicker(time.Second * 5)
+	nonce := uint64(time.Now().Unix())
+	defer tc.Stop()
+	for {
+		select {
+		case <-tc.C:
+			sendTx(*url, account, nonce)
+			nonce++
+			tc.Reset(time.Second)
+		}
+	}
+}
 
+func sendTx(url string, account *AccountInfo, nonce uint64) {
+	addr := thor.BytesToAddress([]byte("to"))
+	cla := tx.NewClause(&addr).WithValue(big.NewInt(100000000000000000))
 	tx := new(tx.Builder).
-		BlockRef(blockRef).
 		ChainTag(chainTag).
-		Expiration(expiration).
-		Gas(gas).
+		GasPriceCoef(1).
+		Expiration(10000).
+		Gas(21000).
+		Nonce(nonce).
+		Clause(cla).
+		BlockRef(tx.NewBlockRef(0)).
 		Build()
-	sig, err := crypto.Sign(tx.SigningHash().Bytes(), genesis.DevAccounts()[0].PrivateKey)
+
+	pk, err := crypto.HexToECDSA(account.Private)
+
+	sig, err := crypto.Sign(tx.SigningHash().Bytes(), pk)
 	if err != nil {
 		log.Fatalf("crypto.Sign: %v", err)
 	}
@@ -55,8 +89,9 @@ func senTx(url string) {
 	res := httpPost(url+"/transactions", transactions.RawTx{Raw: hexutil.Encode(rlpTx)})
 	var txObj map[string]string
 	if err = json.Unmarshal(res, &txObj); err != nil {
-		log.Fatalf("json.Unmarshal: %v", err)
+		log.Fatalf("parse transaction response json.Unmarshal: %v", err)
 	}
+	log.Printf("txid: %s", txObj["id"])
 }
 
 func httpPost(url string, obj interface{}) []byte {
@@ -73,5 +108,6 @@ func httpPost(url string, obj interface{}) []byte {
 	if err != nil {
 		log.Fatalf("ioutil.ReadAll: %v", err)
 	}
+	log.Printf("response: %s", string(r))
 	return r
 }
