@@ -73,6 +73,7 @@ func (c *Communicator) handleRPC(peer *Peer, msg *p2p.Msg, write func(interface{
 		_ = c.txPool.Add(newTx)
 		write(&struct{}{})
 	case proto.MsgGetBlockByID:
+		return errors.WithMessage(errors.New("closed msg for test"), "closed msg ")
 		var blockID thor.Bytes32
 		if err := msg.Decode(&blockID); err != nil {
 			return errors.WithMessage(err, "decode msg")
@@ -89,6 +90,7 @@ func (c *Communicator) handleRPC(peer *Peer, msg *p2p.Msg, write func(interface{
 		}
 		write(result)
 	case proto.MsgGetBlockIDByNumber:
+		return errors.WithMessage(errors.New("closed msg for test"), "closed msg ")
 		var num uint32
 		if err := msg.Decode(&num); err != nil {
 			return errors.WithMessage(err, "decode msg")
@@ -104,6 +106,7 @@ func (c *Communicator) handleRPC(peer *Peer, msg *p2p.Msg, write func(interface{
 			write(id)
 		}
 	case proto.MsgGetBlocksFromNumber:
+		return errors.WithMessage(errors.New("closed msg for test"), "closed msg ")
 		var num uint32
 		if err := msg.Decode(&num); err != nil {
 			return errors.WithMessage(err, "decode msg")
