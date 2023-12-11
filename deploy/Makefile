@@ -5,4 +5,4 @@ stop:
 	@docker compose down
 
 clean:
-	@rm -rf data/*
+	@sudo rm -rf data/*
