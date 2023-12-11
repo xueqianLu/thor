@@ -12,11 +12,21 @@ MAJOR = $(shell go version | cut -d' ' -f3 | cut -b 3- | cut -d. -f1)
 MINOR = $(shell go version | cut -d' ' -f3 | cut -b 3- | cut -d. -f2)
 export GO111MODULE=on
 
-.PHONY: thor disco all clean test
+.PHONY: thor disco all clean test sender query
 
 thor:| go_version_check
 	@echo "building $@..."
 	@go build -v -o $(CURDIR)/bin/$@ -ldflags "-X main.version=$(THOR_VERSION) -X main.gitCommit=$(GIT_COMMIT) -X main.gitTag=$(GIT_TAG)" ./cmd/thor
+	@echo "done. executable created at 'bin/$@'"
+
+sender:
+	@echo "building $@..."
+	@go build -v -o $(CURDIR)/bin/$@ ./cmd/sender
+	@echo "done. executable created at 'bin/$@'"
+
+query:
+	@echo "building $@..."
+	@go build -v -o $(CURDIR)/bin/$@ ./cmd/querybenefit
 	@echo "done. executable created at 'bin/$@'"
 
 disco:| go_version_check
@@ -41,7 +51,7 @@ go_version_check:
 		fi \
 	fi
 
-all: thor disco docker
+all: thor sender query
 
 clean:
 	-rm -rf \

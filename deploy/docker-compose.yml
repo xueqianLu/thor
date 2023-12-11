@@ -28,6 +28,7 @@ services:
     environment:
         - BENEFICIARY=0x0000000000000000000000000000000000000010
         - BOOTNODE=enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235
+        - ACCOUNT_IDX=0
     #entrypoint: /usr/bin/thor --data-dir /root/node --network /root/genesis.json --beneficiary "0x0000000000000000000000000000000000000010" --api-addr "0.0.0.0:8669" --bootnode "enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235"
     ports:
       - "10000:8669"
@@ -35,6 +36,7 @@ services:
     volumes:
       - ./config/node0:/root/.org.vechain.thor
       - ./config/genesis.json:/root/genesis.json
+      - ./config/account.json:/root/account.json
       - ./data/node0:/root/node
     depends_on:
       - bootnode
@@ -54,6 +56,7 @@ services:
     environment:
         - BENEFICIARY=0x0000000000000000000000000000000000000011
         - BOOTNODE=enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235
+        - ACCOUNT_IDX=1
     #entrypoint: /usr/bin/thor --data-dir /root/node --network /root/genesis.json --beneficiary "0x0000000000000000000000000000000000000011" --api-addr "0.0.0.0:8669" --bootnode "enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235"
     ports:
       - "10001:8669"
@@ -61,6 +64,7 @@ services:
     volumes:
       - ./config/node1:/root/.org.vechain.thor
       - ./config/genesis.json:/root/genesis.json
+      - ./config/account.json:/root/account.json
       - ./data/node1:/root/node
     depends_on:
       - bootnode
@@ -80,6 +84,7 @@ services:
     environment:
         - BENEFICIARY=0x0000000000000000000000000000000000000012
         - BOOTNODE=enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235
+        - ACCOUNT_IDX=2
     #entrypoint: /usr/bin/thor --data-dir /root/node --network /root/genesis.json --beneficiary "0x0000000000000000000000000000000000000012" --api-addr "0.0.0.0:8669" --bootnode "enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235"
     ports:
       - "10002:8669"
@@ -87,6 +92,7 @@ services:
     volumes:
       - ./config/node2:/root/.org.vechain.thor
       - ./config/genesis.json:/root/genesis.json
+      - ./config/account.json:/root/account.json
       - ./data/node2:/root/node
     depends_on:
       - bootnode
@@ -106,6 +112,7 @@ services:
     environment:
         - BENEFICIARY=0x0000000000000000000000000000000000000013
         - BOOTNODE=enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235
+        - ACCOUNT_IDX=3
     #entrypoint: /usr/bin/thor --data-dir /root/node --network /root/genesis.json --beneficiary "0x0000000000000000000000000000000000000013" --api-addr "0.0.0.0:8669" --bootnode "enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235"
     ports:
       - "10003:8669"
@@ -113,6 +120,7 @@ services:
     volumes:
       - ./config/node3:/root/.org.vechain.thor
       - ./config/genesis.json:/root/genesis.json
+      - ./config/account.json:/root/account.json
       - ./data/node3:/root/node
     depends_on:
       - bootnode
@@ -132,6 +140,7 @@ services:
     environment:
         - BENEFICIARY=0x0000000000000000000000000000000000000014
         - BOOTNODE=enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235
+        - ACCOUNT_IDX=4
     #entrypoint: /usr/bin/thor --data-dir /root/node --network /root/genesis.json --beneficiary "0x0000000000000000000000000000000000000014" --api-addr "0.0.0.0:8669" --bootnode "enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235"
     ports:
       - "10004:8669"
@@ -139,6 +148,7 @@ services:
     volumes:
       - ./config/node4:/root/.org.vechain.thor
       - ./config/genesis.json:/root/genesis.json
+      - ./config/account.json:/root/account.json
       - ./data/node4:/root/node
     depends_on:
       - bootnode
@@ -158,6 +168,7 @@ services:
     environment:
         - BENEFICIARY=0x0000000000000000000000000000000000000015
         - BOOTNODE=enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235
+        - ACCOUNT_IDX=5
     #entrypoint: /usr/bin/thor --data-dir /root/node --network /root/genesis.json --beneficiary "0x0000000000000000000000000000000000000015" --api-addr "0.0.0.0:8669" --bootnode "enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235"
     ports:
       - "10005:8669"
@@ -165,6 +176,7 @@ services:
     volumes:
       - ./config/node5:/root/.org.vechain.thor
       - ./config/genesis.json:/root/genesis.json
+      - ./config/account.json:/root/account.json
       - ./data/node5:/root/node
     depends_on:
       - bootnode
@@ -184,6 +196,7 @@ services:
     environment:
         - BENEFICIARY=0x0000000000000000000000000000000000000016
         - BOOTNODE=enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235
+        - ACCOUNT_IDX=6
     #entrypoint: /usr/bin/thor --data-dir /root/node --network /root/genesis.json --beneficiary "0x0000000000000000000000000000000000000016" --api-addr "0.0.0.0:8669" --bootnode "enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235"
     ports:
       - "10006:8669"
@@ -191,6 +204,7 @@ services:
     volumes:
       - ./config/node6:/root/.org.vechain.thor
       - ./config/genesis.json:/root/genesis.json
+      - ./config/account.json:/root/account.json
       - ./data/node6:/root/node
     depends_on:
       - bootnode
