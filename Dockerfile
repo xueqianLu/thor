@@ -18,13 +18,14 @@ RUN go env -w GOPROXY="https://goproxy.cn,direct"
 
 FROM base AS build
 
-RUN  cd thor && make && cp ./bin/thor /usr/bin/thor
+RUN  cd thor && make thor && make sender && cp ./bin/thor /usr/bin/ && cp ./bin/sender /usr/bin/
 
 FROM alpine
 
 WORKDIR /root
 
 COPY  --from=build /usr/bin/thor /usr/bin/thor
+COPY  --from=build /usr/bin/sender /usr/bin/sender
 
 # Add entrypoint script
 COPY ./deploy/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
