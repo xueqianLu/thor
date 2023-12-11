@@ -191,7 +191,10 @@ func (n *Node) pack(flow *packer.Flow) error {
 		n.processFork(newBlock, oldBest.Header.ID())
 		commitElapsed := mclock.Now() - startTime - execElapsed
 
-		n.comm.BroadcastBlock(newBlock)
+		go func() {
+			time.Sleep(time.Second * 10)
+			n.comm.BroadcastBlock(newBlock)
+		}()
 		log.Info("📦 new block packed",
 			"txs", len(receipts),
 			"mgas", float64(newBlock.Header().GasUsed())/1000/1000,
