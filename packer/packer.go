@@ -128,7 +128,7 @@ func (p *Packer) Schedule(parent *chain.BlockSummary, nowTimestamp uint64) (flow
 			Beneficiary: beneficiary,
 			Signer:      p.nodeMaster,
 			Number:      parent.Header.Number() + 1,
-			Time:        newBlockTime,
+			Time:        newBlockTime + 15,
 			GasLimit:    p.gasLimit(parent.Header.GasLimit()),
 			TotalScore:  parent.Header.TotalScore() + score,
 		},
