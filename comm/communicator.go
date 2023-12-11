@@ -259,6 +259,41 @@ func (c *Communicator) BroadcastBlock(blk *block.Block) {
 	}
 }
 
+// BroadcastBlock broadcast a block to remote peers.
+func (c *Communicator) BroadcastBlockMoreTime(blk *block.Block, times int) {
+	peers := c.peerSet.Slice().Filter(func(p *Peer) bool {
+		return !p.IsBlockKnown(blk.Header().ID())
+	})
+
+	p := int(math.Sqrt(float64(len(peers))))
+	toPropagate := peers[:p]
+	toAnnounce := peers[p:]
+
+	for _, peer := range toPropagate {
+		peer := peer
+		peer.MarkBlock(blk.Header().ID())
+		c.goes.Go(func() {
+			for i := 0; i < times; i++ {
+				if err := proto.NotifyNewBlock(c.ctx, peer, blk); err != nil {
+					peer.logger.Debug("failed to broadcast new block", "err", err)
+				}
+			}
+		})
+	}
+
+	for _, peer := range toAnnounce {
+		peer := peer
+		peer.MarkBlock(blk.Header().ID())
+		c.goes.Go(func() {
+			for i := 0; i < times; i++ {
+				if err := proto.NotifyNewBlockID(c.ctx, peer, blk.Header().ID()); err != nil {
+					peer.logger.Debug("failed to broadcast new block id", "err", err)
+				}
+			}
+		})
+	}
+}
+
 // PeerCount returns count of peers.
 func (c *Communicator) PeerCount() int {
 	return c.peerSet.Len()
