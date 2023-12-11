@@ -44,8 +44,8 @@ var (
 	log       = log15.New()
 
 	defaultTxPoolOptions = txpool.Options{
-		Limit:           10000,
-		LimitPerAccount: 16,
+		Limit:           1000000,
+		LimitPerAccount: 1600,
 		MaxLifetime:     20 * time.Minute,
 	}
 )
