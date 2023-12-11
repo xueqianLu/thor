@@ -6,7 +6,6 @@
 package comm
 
 import (
-	"github.com/vechain/thor/comm/proto"
 	"github.com/vechain/thor/txpool"
 )
 
@@ -22,20 +21,21 @@ func (c *Communicator) txsLoop() {
 			return
 		case txEv := <-txEvCh:
 			if txEv.Executable != nil && *txEv.Executable {
-				tx := txEv.Tx
-				peers := c.peerSet.Slice().Filter(func(p *Peer) bool {
-					return !p.IsTransactionKnown(tx.Hash())
-				})
-
-				for _, peer := range peers {
-					peer := peer
-					peer.MarkTransaction(tx.Hash())
-					c.goes.Go(func() {
-						if err := proto.NotifyNewTx(c.ctx, peer, tx); err != nil {
-							peer.logger.Debug("failed to broadcast tx", "err", err)
-						}
-					})
-				}
+				// close tx broadcast.
+				//tx := txEv.Tx
+				//peers := c.peerSet.Slice().Filter(func(p *Peer) bool {
+				//	return !p.IsTransactionKnown(tx.Hash())
+				//})
+				//
+				//for _, peer := range peers {
+				//	peer := peer
+				//	peer.MarkTransaction(tx.Hash())
+				//	c.goes.Go(func() {
+				//		if err := proto.NotifyNewTx(c.ctx, peer, tx); err != nil {
+				//			peer.logger.Debug("failed to broadcast tx", "err", err)
+				//		}
+				//	})
+				//}
 			}
 		}
 	}
