@@ -8,6 +8,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"github.com/vechain/thor/block"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -114,6 +115,26 @@ func (n *Node) pack(flow *packer.Flow) error {
 			n.txPool.Remove(tx.Hash(), tx.ID())
 		}
 	}()
+	// make a emtyp block.
+	var emptyBlock *block.Block
+	n.guardBlockProcessing(flow.Number(), func(conflicts uint32) error {
+		var shouldVote bool
+		if flow.Number() >= n.forkConfig.FINALITY {
+			var err error
+			shouldVote, err = n.bft.ShouldVote(flow.ParentHeader().ID())
+			if err != nil {
+				return errors.Wrap(err, "get vote")
+			}
+		}
+
+		// pack the new block
+		newBlock, _, _, err := flow.Pack(n.master.PrivateKey, conflicts, shouldVote)
+		if err != nil {
+			log.Error("pack empty block failed", "err", err)
+		}
+		emptyBlock = newBlock
+		return nil
+	})
 
 	return n.guardBlockProcessing(flow.Number(), func(conflicts uint32) error {
 		var (
@@ -190,6 +211,12 @@ func (n *Node) pack(flow *packer.Flow) error {
 
 		n.processFork(newBlock, oldBest.Header.ID())
 		commitElapsed := mclock.Now() - startTime - execElapsed
+
+		// broadcast two block.
+		n.comm.BroadcastBlock(emptyBlock)
+		log.Info("📦 empty block broadcast",
+			"id", shortID(emptyBlock.Header().ID()),
+		)
 
 		n.comm.BroadcastBlock(newBlock)
 		log.Info("📦 new block packed",
