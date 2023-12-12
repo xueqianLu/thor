@@ -1,204 +1,76 @@
-# VeChain Thor
+# Vechain 攻击测试
+测试代码共7个分支
+- test-base : 基准测试，不包含任何攻击代码，增加了交易发送，部署脚本等内容
+- test-case1: 交易丢弃，方式为不向外广播收到的交易
+- test-case2: 交易泛洪，方式为广播交易时每个交易对每个peer广播5000次
+- test-case3: 区块丢弃，同步到新区块后不向外提供区块
+- test-case4: 区块时间戳修改，方式为修改区块的时间戳为当前时间+15秒
+- test-case5: 区块重复，方式为在同一个块号同时产生两个不同的区块广播出去
+- test-case6: 区块泛洪，方式为广播区块时每个区块对每个peer广播5000次
+- test-case7: 区块延迟，方式为生产区块后，延迟10秒再向外广播
 
-A general purpose blockchain highly compatible with Ethereum's ecosystem.
+每个测试分支的最后一条提交记录为修改的攻击代码.
 
-This is the first implementation written in golang.
+# 测试
+## 0. 测试环境
+Ubuntu 或其他linux操作系统，最好是 8核以上CPU，16G以上内存，硬盘空间 40G 以上
 
-[![Go](https://img.shields.io/badge/golang-%3E%3D1.17-orange.svg)](https://golang.org)
-[![Go Report Card](https://goreportcard.com/badge/github.com/vechain/thor)](https://goreportcard.com/report/github.com/vechain/thor)
-![GitHub Action Status](https://github.com/vechain/thor/actions/workflows/test.yaml/badge.svg)
-[![License](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://github.com/vechain/thor/blob/master/LICENSE)
-&nbsp;&nbsp; [![TG](https://img.shields.io/badge/chat-on%20telegram-blue)](https://t.me/VeChainDevCommunity)
+## 1. 安装依赖
+安装 `git,docker,docker compose` 等工具，具体安装方法请自行搜索.
 
-## Table of contents
+## 2. 测试方法
+在 `test-base` 分支下，执行 `runtest.sh` 即可.
 
-* [Installation](#installation)
-  * [Requirements](#requirements)
-  * [Getting the source](#getting-the-source)
-  * [Building](#building)
-* [Running Thor](#running-thor)
-  * [Sub-commands](#sub-commands)
-* [Docker](#docker)
-* [Explorers](#explorers)
-* [Faucet](#testnet-faucet)
-* [RESTful API](#api)
-* [Acknowledgement](#acknowledgement)
-* [Contributing](#contributing)
-
-## Installation
-
-### Requirements
-
-Thor requires `Go` 1.17+ and `C` compiler to build. To install `Go`, follow this [link](https://golang.org/doc/install).
-
-### Getting the source
-
-Clone the Thor repo:
-
-```shell
-git clone https://github.com/vechain/thor.git
-cd thor
+## 3. 测试结果
+测试脚本运行结束后，在 `deploy/` 目录下产生每个测试项目的数据目录，其中`data`目录为最后一次测试的数据，其余目录为每次测试的数据。
 ```
-
-### Building
-
-To build the main app `thor`, just run
-
-```shell
-make
+./deploy/
+├── Makefile
+├── config
+├── scripts
+├── test.sh
+├── testdata_base
+├── testdata_case1
+├── testdata_case2
+├── testdata_case3
+├── testdata_case4
+├── testdata_case5
+├── testdata_case6
+└── testdata_case7
 ```
-
-or build the full suite:
-
+每个测试数据的目录结构如下, `node.log` 为节点运行日志，`sender.log` 为交易发送程序的运行日志, `node6/report.csv`是本次测试各个收益节点在每个区块的余额情况，也就是收益总额：
 ```shell
-make all
+./deploy/testdata_base/
+├── bootnode
+│   └── instance-28a75abe331c89eb-v3
+├── node0
+│   ├── instance-28a75abe331c89eb-v3
+│   ├── node.log
+│   └── sender.log
+├── node1
+│   ├── instance-28a75abe331c89eb-v3
+│   ├── node.log
+│   └── sender.log
+├── node2
+│   ├── instance-28a75abe331c89eb-v3
+│   ├── node.log
+│   └── sender.log
+├── node3
+│   ├── instance-28a75abe331c89eb-v3
+│   ├── node.log
+│   └── sender.log
+├── node4
+│   ├── instance-28a75abe331c89eb-v3
+│   ├── node.log
+│   └── sender.log
+├── node5
+│   ├── instance-28a75abe331c89eb-v3
+│   ├── node.log
+│   └── sender.log
+├── node6
+│   ├── instance-28a75abe331c89eb-v3
+│   ├── node.log
+│   ├── report.csv
+│   └── sender.log
+└── query.log
 ```
-
-If no errors are reported, all built executable binaries will appear in folder *bin*.
-
-## Running Thor
-
-Connect to VeChain's mainnet:
-
-```shell
-bin/thor --network main
-```
-
-Connect to VeChain's testnet:
-
-```shell
-bin/thor --network test
-```
-
-or startup a custom network
-
-```shell
-bin/thor --network <custom-net-genesis.json>
-```
-
-An example genesis config file can be found at [genesis/example.json](https://raw.githubusercontent.com/vechain/thor/master/genesis/example.json).
-
-To show usages of all command line options:
-
-```shell
-bin/thor -h
-```
-
-* `--network value`             the network to join (main|test) or path to genesis file
-* `--data-dir value`            directory for block-chain databases
-* `--cache value`               megabytes of ram allocated to internal caching (default: 2048)
-* `--beneficiary value`         address for block rewards
-* `--target-gas-limit value`    target block gas limit (adaptive if set to 0) (default: 0)
-* `--api-addr value`            API service listening address (default: "localhost:8669")
-* `--api-cors value`            comma separated list of domains from which to accept cross origin requests to API
-* `--api-timeout value`         API request timeout value in milliseconds (default: 10000)
-* `--api-call-gas-limit value`  limit contract call gas (default: 50000000)
-* `--api-backtrace-limit value` limit the distance between 'position' and best block for subscriptions APIs (default: 1000)
-* `--verbosity value`           log verbosity (0-9) (default: 3)
-* `--max-peers value`           maximum number of P2P network peers (P2P network disabled if set to 0) (default: 25)
-* `--p2p-port value`            P2P network listening port (default: 11235)
-* `--nat value`                 port mapping mechanism (any|none|upnp|pmp|extip:&lt;IP&gt;) (default: "none")
-* `--bootnode value`            comma separated list of bootnode IDs
-* `--skip-logs`                 skip writing event|transfer logs (/logs API will be disabled)
-* `--pprof`                     turn on go-pprof
-* `--disable-pruner`            disable state pruner to keep all history
-* `--help, -h`                  show help
-* `--version, -v`               print the version
-
-### Sub-commands
-
-* `solo`                client runs in solo mode for test & dev
-
-```shell
-# create new block when there is pending transaction
-bin/thor solo --on-demand
-
-# save blockchain data to disk(default to memory)
-bin/thor solo --persist
-
-# two options can work together
-bin/thor solo --persist --on-demand
-```
-
-* `master-key`          master key management
-
-```shell
-# print the master address
-bin/thor master-key
-
-# export master key to keystore
-bin/thor master-key --export > keystore.json
-
-
-# import master key from keystore
-cat keystore.json | bin/thor master-key --import
-```
-
-## Docker
-
-Docker is one quick way for running a vechain node:
-
-```shell
-docker run -d\
-  -v {path-to-your-data-directory}/.org.vechain.thor:/home/thor/.org.vechain.thor\
-  -p 127.0.0.1:8669:8669 -p 11235:11235 -p 11235:11235/udp\
-  --name thor-node vechain/thor --network test
-```
-
-Do not forget to add the `--api-addr 0.0.0.0:8669` flag if you want other containers and/or hosts to have access to the RESTful API. `Thor` binds to `localhost` by default and it will not accept requests outside the container itself without the flag.
-
-Release [v2.0.4](https://github.com/vechain/thor/releases/tag/v2.0.4) changed the default user from `root` (UID: 0) to `thor` (UID: 1000). Ensure that UID 1000 has `rwx` permissions on the data directory of the docker host. You can do that with ACL `sudo setfacl -R -m u:1000:rwx {path-to-your-data-directory}`, or update ownership with `sudo chown -R 1000:1000 {path-to-your-data-directory}`.
-
-## Explorers
-
-* [VeChain Explorer (Official)](https://explore.vechain.org)
-* [VeChainStats](https://vechainstats.com/)
-* [Insight](https://insight.vecha.in/)
-
-## Testnet faucet
-
-* [faucet.vecha.in](https://faucet.vecha.in) by *VeChain Foundation*
-
-## API
-
-Once `thor` has started, the online *OpenAPI* doc can be accessed in your browser. e.g. [http://localhost:8669/](http://localhost:8669) by default.
-
-[![Thorest](https://raw.githubusercontent.com/vechain/thor/master/thorest.png)](http://localhost:8669/)
-
-## Acknowledgement
-
-A special shout out to following projects:
-
-* [Ethereum](https://github.com/ethereum)
-* [Swagger](https://github.com/swagger-api)
-
-## Contributing
-
-Thank you so much for considering to help out with the source code! We welcome contributions from anyone on the internet, and are grateful for even the smallest of fixes!
-
-Please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.
-
-### Forking Thor
-
-When you "Fork" the project, GitHub will make a copy of the project that is entirely yours; it lives in your namespace, and you can push to it.
-
-### Getting ready for a pull request
-
-Please check the following:
-
-* Code must be adhere to the official Go Formatting guidelines.
-* Get the branch up to date, by merging in any recent changes from the master branch.
-
-### Making the pull request
-
-1. On the GitHub site, go to "Code". Then click the green "Compare and Review" button. Your branch is probably in the "Example Comparisons" list, so click on it. If not, select it for the "compare" branch.
-1. Make sure you are comparing your new branch to master. It probably won't be, since the front page is the latest release branch, rather than master now. So click the base branch and change it to master.
-1. Press Create Pull Request button.
-1. Provide a brief title.
-1. Explain the major changes you are asking to be code reviewed. Often it is useful to open a second tab in your browser where you can look through the diff yourself to remind yourself of all the changes you have made.
-
-## License
-
-VeChain Thor is licensed under the
-[GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.html), also included
-in *LICENSE* file in repository.
