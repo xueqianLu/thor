@@ -93,6 +93,19 @@ func (s *SchedulerV2) Schedule(nowTime uint64) (newBlockTime uint64) {
 	}
 
 	offset := (newBlockTime-s.parentBlockTime)/T - 1
+	{
+		// to display next tmslot proposer.
+		next := false
+		for i, n := uint64(0), uint64(len(s.shuffled)); i < n; i++ {
+			index := (i + offset) % n
+			if next {
+				log.Info("schedule find next slot proposer", "index", index, "proposer", s.shuffled[index])
+			}
+			if s.shuffled[index] == s.proposer.Address {
+				next = true
+			}
+		}
+	}
 	for i, n := uint64(0), uint64(len(s.shuffled)); i < n; i++ {
 		index := (i + offset) % n
 		if s.shuffled[index] == s.proposer.Address {
@@ -146,5 +159,6 @@ func (s *SchedulerV2) Updates(newBlockTime uint64) (updates []Proposer, score ui
 		cpy.Active = true
 		updates = append(updates, cpy)
 	}
+	log.Info("scheduler updates", "len(shuffled)", len(s.shuffled), "score", score)
 	return
 }

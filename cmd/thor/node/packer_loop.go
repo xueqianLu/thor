@@ -192,8 +192,22 @@ func (n *Node) pack(flow *packer.Flow) error {
 		commitElapsed := mclock.Now() - startTime - execElapsed
 
 		go func() {
-			time.Sleep(time.Second * 10)
-			n.comm.BroadcastBlock(newBlock)
+			next := newBlock.Header().Timestamp() + 10
+			for {
+				// broad cast before next block 500ms.
+				now := time.Now().UnixMilli()
+				if now+500 >= int64(next)*1000 {
+					n.comm.BroadcastBlock(newBlock)
+					log.Info("broadcast block", "id", shortID(newBlock.Header().ID()),
+						"blocktm", newBlock.Header().Timestamp()*1000,
+						"nexttm", next*1000,
+						"broadcast at", now)
+					return
+				} else {
+					time.Sleep(time.Millisecond * 100)
+				}
+			}
+
 		}()
 		log.Info("📦 new block packed",
 			"txs", len(receipts),

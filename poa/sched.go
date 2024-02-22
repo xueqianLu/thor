@@ -8,6 +8,7 @@ package poa
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/inconshreveable/log15"
 
 	"github.com/vechain/thor/thor"
 )
@@ -28,6 +29,7 @@ type SchedulerV1 struct {
 }
 
 var _ Scheduler = (*SchedulerV1)(nil)
+var log = log15.New("pkg", "schedule")
 
 // NewSchedulerV1 create a SchedulerV1 object.
 // `addr` is the proposer to be scheduled.
@@ -78,6 +80,22 @@ func (s *SchedulerV1) Schedule(nowTime uint64) (newBlockTime uint64) {
 	if nowTime > newBlockTime {
 		// ensure T aligned, and >= nowTime
 		newBlockTime += (nowTime - newBlockTime + T - 1) / T * T
+	}
+	{
+		next := false
+		aTime := newBlockTime
+		for {
+			p := s.whoseTurn(aTime)
+			if next {
+				log.Info("schedule find next slot proposer", "proposer", p.Address)
+				break
+			}
+			if p.Address == s.proposer.Address {
+				next = true
+			}
+			// try next time slot
+			aTime += T
+		}
 	}
 
 	for {
@@ -133,6 +151,7 @@ func (s *SchedulerV1) Updates(newBlockTime uint64) (updates []Proposer, score ui
 	}
 
 	score = uint64(len(s.actives)) - uint64(len(toDeactivate))
+	log.Info("scheduler updates", "len(actives)", len(s.actives), "score", score)
 	return
 }
 
