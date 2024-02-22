@@ -41,13 +41,22 @@ func (fc ForkConfig) String() string {
 
 // NoFork a special config without any forks.
 var NoFork = ForkConfig{
-	VIP191:    math.MaxUint32,
-	ETH_CONST: math.MaxUint32,
-	BLOCKLIST: math.MaxUint32,
-	ETH_IST:   math.MaxUint32,
-	VIP214:    math.MaxUint32,
-	FINALITY:  math.MaxUint32,
+	VIP191:    0,
+	ETH_CONST: 0,
+	BLOCKLIST: 0,
+	ETH_IST:   0,
+	VIP214:    0,
+	FINALITY:  0,
 }
+
+//var NoFork = ForkConfig{
+//	VIP191:    math.MaxUint32,
+//	ETH_CONST: math.MaxUint32,
+//	BLOCKLIST: math.MaxUint32,
+//	ETH_IST:   math.MaxUint32,
+//	VIP214:    math.MaxUint32,
+//	FINALITY:  math.MaxUint32,
+//}
 
 // for well-known networks
 var forkConfigs = map[Bytes32]ForkConfig{
