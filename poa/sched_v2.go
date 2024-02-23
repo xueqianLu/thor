@@ -100,6 +100,7 @@ func (s *SchedulerV2) Schedule(nowTime uint64) (newBlockTime uint64) {
 			index := (i + offset) % n
 			if next {
 				log.Info("schedule find next slot proposer", "index", index, "proposer", s.shuffled[index])
+				break
 			}
 			if s.shuffled[index] == s.proposer.Address {
 				next = true
