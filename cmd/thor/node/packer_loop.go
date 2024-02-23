@@ -193,10 +193,11 @@ func (n *Node) pack(flow *packer.Flow) error {
 		commitElapsed := mclock.Now() - startTime - execElapsed
 
 		go func(bk *block.Block) {
+			next := bk.Header().Timestamp() + 5
 			log.Info("goto broadcast block", "id", shortID(bk.Header().ID()),
 				"blocktm", bk.Header().Timestamp()*1000,
-				"nexttm", (bk.Header().Timestamp()+10)*1000)
-			next := bk.Header().Timestamp() + 10
+				"nexttm", (next)*1000)
+
 			for {
 				// broad cast before next block 500ms.
 				now := time.Now().UnixMilli()
