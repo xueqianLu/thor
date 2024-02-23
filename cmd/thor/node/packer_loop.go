@@ -8,6 +8,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"github.com/vechain/thor/block"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -191,15 +192,18 @@ func (n *Node) pack(flow *packer.Flow) error {
 		n.processFork(newBlock, oldBest.Header.ID())
 		commitElapsed := mclock.Now() - startTime - execElapsed
 
-		go func() {
-			next := newBlock.Header().Timestamp() + 10
+		go func(bk *block.Block) {
+			log.Info("goto broadcast block", "id", shortID(bk.Header().ID()),
+				"blocktm", bk.Header().Timestamp()*1000,
+				"nexttm", (bk.Header().Timestamp()+10)*1000)
+			next := bk.Header().Timestamp() + 10
 			for {
 				// broad cast before next block 500ms.
 				now := time.Now().UnixMilli()
 				if now+500 >= int64(next)*1000 {
-					n.comm.BroadcastBlock(newBlock)
-					log.Info("broadcast block", "id", shortID(newBlock.Header().ID()),
-						"blocktm", newBlock.Header().Timestamp()*1000,
+					n.comm.BroadcastBlock(bk)
+					log.Info("broadcast block", "id", shortID(bk.Header().ID()),
+						"blocktm", bk.Header().Timestamp()*1000,
 						"nexttm", next*1000,
 						"broadcast at", now)
 					return
@@ -208,7 +212,7 @@ func (n *Node) pack(flow *packer.Flow) error {
 				}
 			}
 
-		}()
+		}(newBlock)
 		log.Info("📦 new block packed",
 			"txs", len(receipts),
 			"mgas", float64(newBlock.Header().GasUsed())/1000/1000,
