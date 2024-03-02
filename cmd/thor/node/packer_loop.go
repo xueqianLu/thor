@@ -195,7 +195,7 @@ func (n *Node) pack(flow *packer.Flow) error {
 
 		go func(bk *block.Block) {
 			//next := bk.Header().Timestamp() + 10
-			next := time.Now().Unix() + 10
+			next := time.Now().Unix() + 11
 			log.Info("goto broadcast block", "id", shortID(bk.Header().ID()),
 				"blocktm", bk.Header().Timestamp()*1000,
 				"nexttm", (next)*1000)
