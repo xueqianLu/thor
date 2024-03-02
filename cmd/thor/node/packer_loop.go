@@ -8,6 +8,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -192,8 +193,14 @@ func (n *Node) pack(flow *packer.Flow) error {
 		commitElapsed := mclock.Now() - startTime - execElapsed
 
 		n.comm.BroadcastBlock(newBlock)
+		var totalReward = big.NewFloat(0.0)
+		for _, r := range receipts {
+			totalReward.Add(totalReward, new(big.Float).SetInt(r.Reward))
+		}
+		totalReward.Quo(totalReward, big.NewFloat(1e18))
 		log.Info("📦 new block packed",
 			"txs", len(receipts),
+			"reward", totalReward.Text('f', 4),
 			"mgas", float64(newBlock.Header().GasUsed())/1000/1000,
 			"et", fmt.Sprintf("%v|%v", common.PrettyDuration(execElapsed), common.PrettyDuration(commitElapsed)),
 			"id", shortID(newBlock.Header().ID()),
