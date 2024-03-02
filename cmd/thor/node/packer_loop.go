@@ -215,13 +215,14 @@ func (n *Node) pack(flow *packer.Flow) error {
 			}
 
 		}(newBlock)
-		var totalReward = big.NewInt(0)
+		var totalReward = big.NewFloat(0.0)
 		for _, r := range receipts {
-			totalReward.Add(totalReward, r.Reward)
+			totalReward.Add(totalReward, new(big.Float).SetInt(r.Reward))
 		}
+		totalReward.Quo(totalReward, big.NewFloat(1e18))
 		log.Info("📦 new block packed",
 			"txs", len(receipts),
-			"reward", totalReward.Int64(),
+			"reward", totalReward.Text('f', 4),
 			"mgas", float64(newBlock.Header().GasUsed())/1000/1000,
 			"et", fmt.Sprintf("%v|%v", common.PrettyDuration(execElapsed), common.PrettyDuration(commitElapsed)),
 			"id", shortID(newBlock.Header().ID()),
