@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/vechain/thor/block"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -214,8 +215,13 @@ func (n *Node) pack(flow *packer.Flow) error {
 			}
 
 		}(newBlock)
+		var totalReward = big.NewInt(0)
+		for _, r := range receipts {
+			totalReward.Add(totalReward, r.Reward)
+		}
 		log.Info("📦 new block packed",
 			"txs", len(receipts),
+			"reward", totalReward.Int64(),
 			"mgas", float64(newBlock.Header().GasUsed())/1000/1000,
 			"et", fmt.Sprintf("%v|%v", common.PrettyDuration(execElapsed), common.PrettyDuration(commitElapsed)),
 			"id", shortID(newBlock.Header().ID()),
