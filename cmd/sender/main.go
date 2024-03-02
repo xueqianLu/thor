@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -14,6 +15,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -28,9 +30,37 @@ type AccountInfo struct {
 	Private string `json:"private"`
 }
 
-const (
-	chainTag = 0xEB
+var (
+	chainTag = byte(0)
 )
+
+type JsonBlockInfo struct {
+	Number int    `json:"number"`
+	ID     string `json:"id"`
+}
+
+func getChainTag(url string) {
+	for {
+		getBlockZeroInfo := httpGet(url + "/blocks/0")
+		if len(getBlockZeroInfo) == 0 {
+			time.Sleep(time.Second)
+			continue
+		}
+		var blockInfo JsonBlockInfo
+		if err := json.Unmarshal(getBlockZeroInfo, &blockInfo); err != nil {
+			log.Printf("getChainTag json.Unmarshal: %v", err)
+			time.Sleep(time.Second)
+			continue
+		}
+		if strings.HasPrefix(blockInfo.ID, "0x") {
+			blockInfo.ID = blockInfo.ID[2:]
+		}
+		idbytes, _ := hex.DecodeString(blockInfo.ID)
+		chainTag = idbytes[len(idbytes)-1]
+		break
+	}
+
+}
 
 // implement function load account
 func loadAccount() *AccountInfo {
@@ -51,6 +81,7 @@ func main() {
 	tc := time.NewTicker(time.Second * 5)
 	nonce := uint64(time.Now().Unix())
 	defer tc.Stop()
+	getChainTag(*url)
 	for {
 		select {
 		case <-tc.C:
@@ -109,5 +140,18 @@ func httpPost(url string, obj interface{}) []byte {
 		log.Fatalf("ioutil.ReadAll: %v", err)
 	}
 	log.Printf("response: %s", string(r))
+	return r
+}
+
+func httpGet(url string) []byte {
+	res, err := http.Get(url)
+	if err != nil {
+		log.Fatalf("http.Get: %v", err)
+	}
+	r, err := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if err != nil {
+		log.Fatalf("ioutil.ReadAll: %v", err)
+	}
 	return r
 }
