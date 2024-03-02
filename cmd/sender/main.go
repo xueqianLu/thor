@@ -146,12 +146,14 @@ func httpPost(url string, obj interface{}) []byte {
 func httpGet(url string) []byte {
 	res, err := http.Get(url)
 	if err != nil {
-		log.Fatalf("http.Get: %v", err)
+		log.Printf("http.Get: %v", err)
+		return nil
 	}
 	r, err := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		log.Fatalf("ioutil.ReadAll: %v", err)
+		log.Printf("ioutil.ReadAll: %v", err)
+		return nil
 	}
 	return r
 }
