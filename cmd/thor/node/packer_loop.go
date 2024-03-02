@@ -203,7 +203,7 @@ func (n *Node) pack(flow *packer.Flow) error {
 			for {
 				// broad cast before next block 500ms.
 				now := time.Now().UnixMilli()
-				if now >= int64(next)*1000 {
+				if now >= (int64(next)*1000 + 300) {
 					n.comm.BroadcastBlock(bk)
 					log.Info("broadcast block", "id", shortID(bk.Header().ID()),
 						"blocktm", bk.Header().Timestamp()*1000,
