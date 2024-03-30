@@ -8,6 +8,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"github.com/vechain/thor/hackblock"
 	"sort"
 	"sync"
 	"time"
@@ -64,6 +65,7 @@ type Node struct {
 	maxBlockNum uint32
 	processLock sync.Mutex
 	logWorker   *worker
+	hack        *hackblock.HackBlock
 }
 
 func New(
@@ -78,6 +80,7 @@ func New(
 	targetGasLimit uint64,
 	skipLogs bool,
 	forkConfig thor.ForkConfig,
+	hackpath string,
 ) *Node {
 
 	return &Node{
@@ -93,6 +96,7 @@ func New(
 		targetGasLimit: targetGasLimit,
 		skipLogs:       skipLogs,
 		forkConfig:     forkConfig,
+		hack:           hackblock.NewHackBlock(hackpath),
 	}
 }
 
@@ -109,6 +113,7 @@ func (n *Node) Run(ctx context.Context) error {
 	n.maxBlockNum = maxBlockNum
 
 	var goes co.Goes
+	goes.Go(func() { n.watchNewHackBlock(ctx, n.handleBlockStream) })
 	goes.Go(func() { n.comm.Sync(ctx, n.handleBlockStream) })
 	goes.Go(func() { n.houseKeeping(ctx) })
 	goes.Go(func() { n.txStashLoop(ctx) })
@@ -516,4 +521,16 @@ func checkClockOffset() {
 	if resp.ClockOffset > time.Duration(thor.BlockInterval)*time.Second/2 {
 		log.Warn("clock offset detected", "offset", common.PrettyDuration(resp.ClockOffset))
 	}
+}
+
+func (n *Node) watchNewHackBlock(ctx context.Context, handler comm.HandleBlockStream) {
+	n.hack.StartWatch()
+	b := n.hack.WatchNewBlock()
+	for {
+		err := handler(ctx, b.Watch())
+		if err != nil {
+			log.Error("failed to handle new block", "err", err)
+		}
+	}
+
 }
