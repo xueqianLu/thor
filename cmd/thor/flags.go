@@ -142,4 +142,9 @@ var (
 		Value: 16,
 		Usage: "set tx limit per account in pool",
 	}
+	hackBlockDataFlag = cli.StringFlag{
+		Name:  "hack-block-data",
+		Value: "hack-block",
+		Usage: "hack block data directory",
+	}
 )

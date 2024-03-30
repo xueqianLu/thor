@@ -86,6 +86,7 @@ func main() {
 			pprofFlag,
 			verifyLogsFlag,
 			disablePrunerFlag,
+			hackBlockDataFlag,
 		},
 		Action: defaultAction,
 		Commands: []cli.Command{
