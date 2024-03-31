@@ -6,6 +6,7 @@ package bft
 
 import (
 	"crypto/rand"
+	"github.com/vechain/thor/block"
 	"math"
 	"testing"
 
@@ -128,6 +129,85 @@ func (test *TestBFT) reCreateEngine() error {
 	return nil
 }
 
+func (test *TestBFT) newBlockWithInterval(parentSummary *chain.BlockSummary, master genesis.DevAccount, interval int) (*chain.BlockSummary, error) {
+	packer := packer.New(test.repo, test.stater, master.Address, &thor.Address{}, test.fc)
+	flow, err := packer.MockWithInterval(parentSummary, parentSummary.Header.Timestamp()+uint64(interval)*thor.BlockInterval, parentSummary.Header.GasLimit(), interval)
+	if err != nil {
+		return nil, err
+	}
+
+	conflicts, err := test.repo.ScanConflicts(parentSummary.Header.Number() + 1)
+	if err != nil {
+		return nil, err
+	}
+
+	b, stg, _, err := flow.Pack(master.PrivateKey, conflicts, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = stg.Commit(); err != nil {
+		return nil, err
+	}
+
+	if err = test.repo.AddBlock(b, nil, conflicts); err != nil {
+		return nil, err
+	}
+	if err = test.engine.CommitBlock(b.Header(), false); err != nil {
+		return nil, err
+	}
+
+	return test.repo.GetBlockSummary(b.Header().ID())
+}
+
+func (test *TestBFT) justNewBlockWithInterval(parentSummary *chain.BlockSummary, master genesis.DevAccount, interval int) (*block.Block, error) {
+	packer := packer.New(test.repo, test.stater, master.Address, &thor.Address{}, test.fc)
+	flow, err := packer.MockWithInterval(parentSummary, parentSummary.Header.Timestamp()+uint64(interval)*thor.BlockInterval, parentSummary.Header.GasLimit(), interval)
+	if err != nil {
+		return nil, err
+	}
+
+	conflicts, err := test.repo.ScanConflicts(parentSummary.Header.Number() + 1)
+	if err != nil {
+		return nil, err
+	}
+
+	b, stg, _, err := flow.Pack(master.PrivateKey, conflicts, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = stg.Commit(); err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (test *TestBFT) justNewBlock(parentSummary *chain.BlockSummary, master genesis.DevAccount) (*block.Block, error) {
+	packer := packer.New(test.repo, test.stater, master.Address, &thor.Address{}, test.fc)
+	flow, err := packer.Mock(parentSummary, parentSummary.Header.Timestamp()+thor.BlockInterval, parentSummary.Header.GasLimit())
+	if err != nil {
+		return nil, err
+	}
+
+	conflicts, err := test.repo.ScanConflicts(parentSummary.Header.Number() + 1)
+	if err != nil {
+		return nil, err
+	}
+
+	b, stg, _, err := flow.Pack(master.PrivateKey, conflicts, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = stg.Commit(); err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
 func (test *TestBFT) newBlock(parentSummary *chain.BlockSummary, master genesis.DevAccount, shouldVote bool) (*chain.BlockSummary, error) {
 	packer := packer.New(test.repo, test.stater, master.Address, &thor.Address{}, test.fc)
 	flow, err := packer.Mock(parentSummary, parentSummary.Header.Timestamp()+thor.BlockInterval, parentSummary.Header.GasLimit())
@@ -192,6 +272,47 @@ func (test *TestBFT) fastForwardWithMinority(cnt int) error {
 	}
 
 	return test.repo.SetBestBlockID(parent.Header.ID())
+}
+
+func (test *TestBFT) fastForwardWithInterval(cnt int, interval int) error {
+	parent := test.repo.BestBlockSummary()
+
+	devCnt := len(devAccounts) - 1
+	if cnt >= 1 {
+		// make a offset to pick a different master
+		acc := devAccounts[(int(parent.Header.Number())+interval+1)%devCnt]
+		var err error
+		parent, err = test.newBlockWithInterval(parent, acc, interval)
+		if err != nil {
+			return err
+		}
+	}
+	for i := 2; i <= cnt; i++ {
+		// make a offset to pick a different master
+		acc := devAccounts[(int(parent.Header.Number())+interval+1)%devCnt]
+		var err error
+		parent, err = test.newBlock(parent, acc, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	return test.repo.SetBestBlockID(parent.Header.ID())
+}
+
+func (test *TestBFT) buildDelayedChain(parent *chain.BlockSummary, cnt int) (*chain.Chain, error) {
+	devCnt := len(devAccounts) - 1
+	for i := 1; i <= cnt; i++ {
+		// make a offset to pick a different master
+		acc := devAccounts[(int(parent.Header.Number())+1+4)%devCnt]
+
+		var err error
+		parent, err = test.newBlock(parent, acc, true)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return test.repo.NewChain(parent.Header.ID()), nil
 }
 
 func (test *TestBFT) buildBranch(cnt int) (*chain.Chain, error) {
@@ -429,6 +550,42 @@ func TestAccepts(t *testing.T) {
 	ok, err = testBFT.engine.Accepts(branchID)
 	assert.Nil(t, err)
 	assert.Equal(t, ok, false)
+}
+
+func TestSelect(t *testing.T) {
+	testBFT, err := newTestBft(defaultFC)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = testBFT.fastForward(thor.CheckpointInterval + 10); err != nil {
+		t.Fatal(err)
+	}
+
+	parent := *testBFT.repo.BestBlockSummary()
+
+	originParent := parent
+
+	if err = testBFT.fastForwardWithInterval(3, 3); err != nil {
+		t.Fatal(err)
+	}
+
+	var delayedBlock *block.Block
+	{
+		devCnt := len(devAccounts) - 1
+		// make a offset to pick a different master
+		acc := devAccounts[(int(parent.Header.Number())+1)%devCnt]
+		delayedBlock, err = testBFT.justNewBlock(&originParent, acc)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	becameBest, err := testBFT.engine.Select(delayedBlock.Header())
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.True(t, becameBest)
 }
 
 func TestGetVote(t *testing.T) {

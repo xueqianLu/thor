@@ -137,6 +137,39 @@ func (p *Packer) Schedule(parent *chain.BlockSummary, nowTimestamp uint64) (flow
 	return newFlow(p, parent.Header, rt, features), nil
 }
 
+// MockWithInterval create a packing flow upon given parent, but with a designated timestamp.
+// It will skip the PoA verification and scheduling, and the block produced by
+// the returned flow is not in consensus.
+func (p *Packer) MockWithInterval(parent *chain.BlockSummary, targetTime uint64, gasLimit uint64, interval int) (*Flow, error) {
+	state := p.stater.NewState(parent.Header.StateRoot(), parent.Header.Number(), parent.Conflicts, parent.SteadyNum)
+
+	var features tx.Features
+	if parent.Header.Number()+1 >= p.forkConfig.VIP191 {
+		features |= tx.DelegationFeature
+	}
+
+	gl := gasLimit
+	if gasLimit == 0 {
+		gl = p.gasLimit(parent.Header.GasLimit())
+	}
+	targetTime = parent.Header.Timestamp() + uint64(interval)*thor.BlockInterval
+
+	rt := runtime.New(
+		p.repo.NewChain(parent.Header.ID()),
+		state,
+		&xenv.BlockContext{
+			Beneficiary: p.nodeMaster,
+			Signer:      p.nodeMaster,
+			Number:      parent.Header.Number() + 1,
+			Time:        targetTime,
+			GasLimit:    gl,
+			TotalScore:  parent.Header.TotalScore(),
+		},
+		p.forkConfig)
+
+	return newFlow(p, parent.Header, rt, features), nil
+}
+
 // Mock create a packing flow upon given parent, but with a designated timestamp.
 // It will skip the PoA verification and scheduling, and the block produced by
 // the returned flow is not in consensus.
