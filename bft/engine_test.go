@@ -7,6 +7,7 @@ package bft
 import (
 	"crypto/rand"
 	"github.com/vechain/thor/block"
+	"github.com/vechain/thor/poa"
 	"math"
 	"testing"
 
@@ -129,9 +130,30 @@ func (test *TestBFT) reCreateEngine() error {
 	return nil
 }
 
-func (test *TestBFT) newBlockWithInterval(parentSummary *chain.BlockSummary, master genesis.DevAccount, interval int) (*chain.BlockSummary, error) {
+func (test *TestBFT) initPropose() []poa.Proposer {
+	list := make([]poa.Proposer, 0)
+	for _, acc := range devAccounts {
+		list = append(list, poa.Proposer{
+			Address: acc.Address,
+			Active:  true,
+		})
+	}
+	return list
+}
+
+func (test *TestBFT) newBlockWithInterval(parentSummary *chain.BlockSummary, master genesis.DevAccount, proposers []poa.Proposer, interval int) (*chain.BlockSummary, error) {
 	packer := packer.New(test.repo, test.stater, master.Address, &thor.Address{}, test.fc)
-	flow, err := packer.MockWithInterval(parentSummary, parentSummary.Header.Timestamp()+uint64(interval)*thor.BlockInterval, parentSummary.Header.GasLimit(), interval)
+	var seed []byte
+	seeder := poa.NewSeeder(test.repo)
+	seed, _ = seeder.Generate(parentSummary.Header.ID())
+	sc, err := poa.NewSchedulerV2(master.Address, proposers, parentSummary.Header.Number(), parentSummary.Header.Timestamp(), seed)
+	if err != nil {
+		return nil, err
+	}
+	target := parentSummary.Header.Timestamp() + uint64(interval)*thor.BlockInterval
+	_, score := sc.Updates(target)
+
+	flow, err := packer.MockWithInterval(parentSummary, target, parentSummary.Header.GasLimit(), score)
 	if err != nil {
 		return nil, err
 	}
@@ -160,13 +182,38 @@ func (test *TestBFT) newBlockWithInterval(parentSummary *chain.BlockSummary, mas
 	return test.repo.GetBlockSummary(b.Header().ID())
 }
 
-func (test *TestBFT) justNewBlockWithInterval(parentSummary *chain.BlockSummary, master genesis.DevAccount, interval int) (*block.Block, error) {
+func (test *TestBFT) findMaster(proposers []poa.Proposer, parent *block.Header, newTime uint64) (genesis.DevAccount, bool) {
+	seeder := poa.NewSeeder(test.repo)
+	for _, acc := range devAccounts {
+		seed, _ := seeder.Generate(parent.ID())
+		sc, err := poa.NewSchedulerV2(acc.Address, proposers, parent.Number(), parent.Timestamp(), seed)
+		if err != nil {
+			continue
+		}
+		if sc.IsScheduled(newTime, acc.Address) {
+			return acc, true
+		}
+	}
+	return devAccounts[0], false
+
+}
+
+func (test *TestBFT) justNewBlockWithInterval(parentSummary *chain.BlockSummary, master genesis.DevAccount, proposers []poa.Proposer, interval int) (*block.Block, error) {
 	packer := packer.New(test.repo, test.stater, master.Address, &thor.Address{}, test.fc)
-	flow, err := packer.MockWithInterval(parentSummary, parentSummary.Header.Timestamp()+uint64(interval)*thor.BlockInterval, parentSummary.Header.GasLimit(), interval)
+	var seed []byte
+	seeder := poa.NewSeeder(test.repo)
+	seed, _ = seeder.Generate(parentSummary.Header.ID())
+	sc, err := poa.NewSchedulerV2(master.Address, proposers, parentSummary.Header.Number(), parentSummary.Header.Timestamp(), seed)
 	if err != nil {
 		return nil, err
 	}
+	target := parentSummary.Header.Timestamp() + uint64(interval)*thor.BlockInterval
+	_, score := sc.Updates(target)
 
+	flow, err := packer.MockWithInterval(parentSummary, target, parentSummary.Header.GasLimit(), score)
+	if err != nil {
+		return nil, err
+	}
 	conflicts, err := test.repo.ScanConflicts(parentSummary.Header.Number() + 1)
 	if err != nil {
 		return nil, err
@@ -184,9 +231,20 @@ func (test *TestBFT) justNewBlockWithInterval(parentSummary *chain.BlockSummary,
 	return b, nil
 }
 
-func (test *TestBFT) justNewBlock(parentSummary *chain.BlockSummary, master genesis.DevAccount) (*block.Block, error) {
+func (test *TestBFT) justNewBlock(parentSummary *chain.BlockSummary, master genesis.DevAccount, proposers []poa.Proposer) (*block.Block, error) {
 	packer := packer.New(test.repo, test.stater, master.Address, &thor.Address{}, test.fc)
-	flow, err := packer.Mock(parentSummary, parentSummary.Header.Timestamp()+thor.BlockInterval, parentSummary.Header.GasLimit())
+
+	var seed []byte
+	seeder := poa.NewSeeder(test.repo)
+	seed, _ = seeder.Generate(parentSummary.Header.ID())
+	sc, err := poa.NewSchedulerV2(master.Address, proposers, parentSummary.Header.Number(), parentSummary.Header.Timestamp(), seed)
+	if err != nil {
+		return nil, err
+	}
+	target := parentSummary.Header.Timestamp() + thor.BlockInterval
+	_, score := sc.Updates(target)
+
+	flow, err := packer.MockWithInterval(parentSummary, target, parentSummary.Header.GasLimit(), score)
 	if err != nil {
 		return nil, err
 	}
@@ -276,13 +334,14 @@ func (test *TestBFT) fastForwardWithMinority(cnt int) error {
 
 func (test *TestBFT) fastForwardWithInterval(cnt int, interval int) error {
 	parent := test.repo.BestBlockSummary()
+	proposers := test.initPropose()
 
 	devCnt := len(devAccounts) - 1
 	if cnt >= 1 {
 		// make a offset to pick a different master
 		acc := devAccounts[(int(parent.Header.Number())+interval+1)%devCnt]
 		var err error
-		parent, err = test.newBlockWithInterval(parent, acc, interval)
+		parent, err = test.newBlockWithInterval(parent, acc, proposers, interval)
 		if err != nil {
 			return err
 		}
@@ -566,6 +625,23 @@ func TestSelect(t *testing.T) {
 
 	originParent := parent
 
+	var intervalBlock *block.Block
+	{
+		interval := 1
+		devCnt := len(devAccounts) - 1
+		// make a offset to pick a different master
+		acc := devAccounts[(int(parent.Header.Number())+interval+1)%devCnt]
+		intervalBlock, err = testBFT.justNewBlockWithInterval(&originParent, acc, testBFT.initPropose(), interval)
+		if err != nil {
+			t.Fatal(err)
+		}
+		becameBest, err := testBFT.engine.Select(intervalBlock.Header())
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.True(t, becameBest)
+	}
+
 	if err = testBFT.fastForwardWithInterval(3, 3); err != nil {
 		t.Fatal(err)
 	}
@@ -575,7 +651,7 @@ func TestSelect(t *testing.T) {
 		devCnt := len(devAccounts) - 1
 		// make a offset to pick a different master
 		acc := devAccounts[(int(parent.Header.Number())+1)%devCnt]
-		delayedBlock, err = testBFT.justNewBlock(&originParent, acc)
+		delayedBlock, err = testBFT.justNewBlock(&originParent, acc, testBFT.initPropose())
 		if err != nil {
 			t.Fatal(err)
 		}
