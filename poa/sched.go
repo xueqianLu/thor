@@ -8,6 +8,7 @@ package poa
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/inconshreveable/log15"
 
 	"github.com/vechain/thor/thor"
 )
@@ -28,6 +29,7 @@ type SchedulerV1 struct {
 }
 
 var _ Scheduler = (*SchedulerV1)(nil)
+var log = log15.New("pkg", "schedule")
 
 // NewSchedulerV1 create a SchedulerV1 object.
 // `addr` is the proposer to be scheduled.
