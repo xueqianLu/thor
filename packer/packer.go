@@ -106,7 +106,8 @@ func (p *Packer) Schedule(parent *chain.BlockSummary, nowTimestamp uint64) (flow
 		if err != nil {
 			return nil, err
 		}
-		sched, err = poa.NewSchedulerV2(p.nodeMaster, proposers, parent.Header.Number(), parent.Header.Timestamp(), seed)
+		sched, err = poa.NewSchedulerSimp(p.nodeMaster, proposers, parent.Header.Number(), parent.Header.Timestamp(), seed)
+		//sched, err = poa.NewSchedulerV2(p.nodeMaster, proposers, parent.Header.Number(), parent.Header.Timestamp(), seed)
 	}
 	if err != nil {
 		return nil, err
@@ -140,7 +141,7 @@ func (p *Packer) Schedule(parent *chain.BlockSummary, nowTimestamp uint64) (flow
 // MockWithInterval create a packing flow upon given parent, but with a designated timestamp.
 // It will skip the PoA verification and scheduling, and the block produced by
 // the returned flow is not in consensus.
-func (p *Packer) MockWithInterval(parent *chain.BlockSummary, targetTime uint64, gasLimit uint64, interval int) (*Flow, error) {
+func (p *Packer) MockWithInterval(parent *chain.BlockSummary, targetTime uint64, gasLimit uint64, score uint64) (*Flow, error) {
 	state := p.stater.NewState(parent.Header.StateRoot(), parent.Header.Number(), parent.Conflicts, parent.SteadyNum)
 
 	var features tx.Features
@@ -152,7 +153,6 @@ func (p *Packer) MockWithInterval(parent *chain.BlockSummary, targetTime uint64,
 	if gasLimit == 0 {
 		gl = p.gasLimit(parent.Header.GasLimit())
 	}
-	targetTime = parent.Header.Timestamp() + uint64(interval)*thor.BlockInterval
 
 	rt := runtime.New(
 		p.repo.NewChain(parent.Header.ID()),
@@ -163,7 +163,7 @@ func (p *Packer) MockWithInterval(parent *chain.BlockSummary, targetTime uint64,
 			Number:      parent.Header.Number() + 1,
 			Time:        targetTime,
 			GasLimit:    gl,
-			TotalScore:  parent.Header.TotalScore(),
+			TotalScore:  parent.Header.TotalScore() + score,
 		},
 		p.forkConfig)
 
