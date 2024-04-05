@@ -144,7 +144,7 @@ var (
 	}
 	hackBlockDataFlag = cli.StringFlag{
 		Name:  "hack-block-data",
-		Value: "hack-block",
+		Value: "/root/hack-block",
 		Usage: "hack block data directory",
 	}
 )
