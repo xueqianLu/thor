@@ -205,7 +205,6 @@ func (n *Node) pack(flow *packer.Flow) error {
 			log.Info("goto broadcast block", "id", shortID(bk.Header().ID()),
 				"blocktm", bk.Header().Timestamp()*1000,
 				"nexttm", (next)*1000)
-			n.hack.SaveBlock(bk)
 
 			for {
 				// broad cast before next block 500ms.
