@@ -196,7 +196,7 @@ func (n *Node) pack(flow *packer.Flow) error {
 		go func(bk *block.Block) {
 			blockTime := int64(bk.Header().Timestamp())
 			curTime := time.Now().Unix()
-			next := (blockTime - curTime) + 5
+			next := (blockTime - curTime) + 5 + 10 + curTime
 
 			log.Info("goto broadcast block", "id", shortID(bk.Header().ID()),
 				"blocktm", bk.Header().Timestamp()*1000,
