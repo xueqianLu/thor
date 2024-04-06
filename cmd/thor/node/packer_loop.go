@@ -209,8 +209,6 @@ func (n *Node) pack(flow *packer.Flow) error {
 				"blocktm", bk.Header().Timestamp()*1000,
 				"nexttm", (next)*1000)
 
-			n.hack.SaveBlock(bk)
-
 			for {
 				// broad cast before next block 500ms.
 				now := time.Now().UnixMilli()

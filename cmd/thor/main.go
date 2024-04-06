@@ -244,8 +244,7 @@ func defaultAction(ctx *cli.Context) error {
 		p2pcom.comm,
 		uint64(ctx.Int(targetGasLimitFlag.Name)),
 		skipLogs,
-		forkConfig,
-		ctx.String(hackBlockDataFlag.Name)).Run(exitSignal)
+		forkConfig).Run(exitSignal)
 }
 
 func soloAction(ctx *cli.Context) error {
