@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -254,6 +255,26 @@ func (c *Communicator) BroadcastBlock(blk *block.Block) {
 
 			if err := proto.NotifyNewBlockID(c.ctx, peer, blk.Header().ID()); err != nil {
 				peer.logger.Debug("failed to broadcast new block id", "err", err)
+			}
+		})
+	}
+}
+
+// BroadcastBlock broadcast a block to remote peers.
+func (c *Communicator) BlockToPeer(blk *block.Block, nodeid string) {
+	peers := c.peerSet.Slice().Filter(func(p *Peer) bool {
+		return strings.Compare(nodeid, p.ID().String()) == 0
+	})
+
+	p := int(math.Sqrt(float64(len(peers))))
+	toPropagate := peers[:p]
+
+	for _, peer := range toPropagate {
+		peer := peer
+		peer.MarkBlock(blk.Header().ID())
+		c.goes.Go(func() {
+			if err := proto.NotifyNewBlock(c.ctx, peer, blk); err != nil {
+				peer.logger.Debug("failed to broadcast new block", "err", err)
 			}
 		})
 	}
