@@ -189,7 +189,8 @@ func (n *Node) houseKeeping(ctx context.Context) {
 					futureBlocks.Set(newBlock.Header().ID(), newBlock.Block)
 				}
 			} else if isTrunk {
-				n.comm.BroadcastBlock(newBlock.Block)
+				log.Info("imported block", "id", newBlock.Block.Header().ID(), "close broadcast block", "for hack")
+				//n.comm.BroadcastBlock(newBlock.Block)
 				log.Info(fmt.Sprintf("imported blocks (%v)", stats.processed), stats.LogContext(newBlock.Block.Header())...)
 			}
 		case <-futureTicker.C:
