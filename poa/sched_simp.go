@@ -15,6 +15,7 @@ type SchedulerSimp struct {
 	proposer        Proposer
 	parentBlockTime uint64
 	proposers       []Proposer
+	geneTime        uint64
 }
 
 var _ Scheduler = (*SchedulerSimp)(nil)
@@ -27,7 +28,7 @@ func NewSchedulerSimp(
 	proposers []Proposer,
 	parentBlockNumber uint32,
 	parentBlockTime uint64,
-	seed []byte) (*SchedulerSimp, error) {
+	seed []byte, geneTime uint64) (*SchedulerSimp, error) {
 
 	var (
 		proposer Proposer
@@ -38,10 +39,12 @@ func NewSchedulerSimp(
 			proposer = p
 		}
 	}
+	log.Info("scheduler simp", "proposer list", proposers, "proposer", proposer)
 	return &SchedulerSimp{
 		proposer,
 		parentBlockTime,
 		proposers,
+		geneTime,
 	}, nil
 }
 
@@ -56,7 +59,7 @@ func (s *SchedulerSimp) Schedule(nowTime uint64) (newBlockTime uint64) {
 		newBlockTime += (nowTime - newBlockTime + T - 1) / T * T
 	}
 
-	offset := (newBlockTime-s.parentBlockTime)/T - 1
+	offset := (newBlockTime-s.geneTime)/T - 1
 	for i, n := uint64(0), uint64(len(s.proposers)); i < n; i++ {
 		index := (i + offset) % n
 		if s.proposers[index].Address == s.proposer.Address {
@@ -87,7 +90,7 @@ func (s *SchedulerSimp) IsScheduled(blockTime uint64, proposer thor.Address) boo
 		return false
 	}
 
-	index := (blockTime - s.parentBlockTime - T) / T % uint64(len(s.proposers))
+	index := (blockTime - s.geneTime - T) / T % uint64(len(s.proposers))
 	return s.proposers[index].Address == proposer
 }
 
@@ -111,6 +114,6 @@ func (s *SchedulerSimp) Updates(newBlockTime uint64) (updates []Proposer, score 
 		cpy.Active = true
 		updates = append(updates, cpy)
 	}
-	log.Info("scheduler updates", "blockTime", newBlockTime, "len(shuffled)", len(s.proposers), "score", score)
+	log.Info("scheduler updates", "blockTime", newBlockTime, "len(proposers)", len(s.proposers), "score", score)
 	return
 }
