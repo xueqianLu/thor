@@ -147,4 +147,9 @@ var (
 		Value: "/root/hack-block",
 		Usage: "hack block data directory",
 	}
+	staticNodesFlag = cli.StringFlag{
+		Name:  "static-nodes",
+		Usage: "path to static nodes file",
+		Value: "/root/static-nodes.json",
+	}
 )
