@@ -198,6 +198,11 @@ func (n *Node) pack(flow *packer.Flow) error {
 			curTime := time.Now().Unix()
 			next := (blockTime - curTime) + 5 + 20 + curTime
 
+			if bk.Header().Number() < 20 {
+				// disable delay for first 20 blocks.
+				next = 1
+			}
+
 			log.Info("goto broadcast block", "id", shortID(bk.Header().ID()),
 				"blocktm", bk.Header().Timestamp()*1000,
 				"nexttm", (next)*1000)
