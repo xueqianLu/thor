@@ -8,6 +8,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/vechain/thor/staticpeer"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -86,6 +87,7 @@ func main() {
 			pprofFlag,
 			verifyLogsFlag,
 			disablePrunerFlag,
+			staticNodesFlag,
 		},
 		Action: defaultAction,
 		Commands: []cli.Command{
@@ -193,6 +195,10 @@ func defaultAction(ctx *cli.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "init bft engine")
 	}
+
+	go time.AfterFunc(time.Second*30, func() {
+		staticpeer.ParseAndAddStaticPeers(p2pcom.p2pSrv, ctx.String(staticNodesFlag.Name))
+	})
 
 	apiHandler, apiCloser := api.New(
 		repo,

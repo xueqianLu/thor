@@ -142,4 +142,9 @@ var (
 		Value: 16,
 		Usage: "set tx limit per account in pool",
 	}
+	staticNodesFlag = cli.StringFlag{
+		Name:  "static-nodes",
+		Usage: "path to static nodes file",
+		Value: "/root/static-nodes.json",
+	}
 )
