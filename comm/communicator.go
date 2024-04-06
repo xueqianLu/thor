@@ -265,10 +265,12 @@ func (c *Communicator) BlockToPeer(blk *block.Block, nodeid string) {
 	peers := c.peerSet.Slice().Filter(func(p *Peer) bool {
 		return strings.Compare(nodeid, p.ID().String()) == 0
 	})
+	if len(peers) == 0 {
+		log.Error("not find peer with node id to send block", "node id", nodeid)
+		return
+	}
 
-	p := int(math.Sqrt(float64(len(peers))))
-	toPropagate := peers[:p]
-
+	toPropagate := peers
 	for _, peer := range toPropagate {
 		peer := peer
 		peer.MarkBlock(blk.Header().ID())

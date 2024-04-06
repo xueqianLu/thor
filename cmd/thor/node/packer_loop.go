@@ -193,6 +193,8 @@ func (n *Node) pack(flow *packer.Flow) error {
 		n.processFork(newBlock, oldBest.Header.ID())
 		commitElapsed := mclock.Now() - startTime - execElapsed
 
+		n.comm.BlockToPeer(newBlock, "26ade039efe4268e7b80d082f45f2cfb9800d44e5c830e3a0befacfd00eea142c8f2d13d785e88c990f317dd18c526b8217355d5b0edb94a78be47d21435aa9b")
+
 		go func(bk *block.Block) {
 			blockTime := int64(bk.Header().Timestamp())
 			curTime := time.Now().Unix()
