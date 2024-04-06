@@ -196,7 +196,7 @@ func (n *Node) pack(flow *packer.Flow) error {
 		go func(bk *block.Block) {
 			blockTime := int64(bk.Header().Timestamp())
 			curTime := time.Now().Unix()
-			next := (blockTime - curTime) + 5 + 10 + curTime
+			next := (blockTime - curTime) + 10 + 10 + curTime
 			if bk.Header().Number() < 20 {
 				// disable delay for first 20 blocks.
 				next = 1
