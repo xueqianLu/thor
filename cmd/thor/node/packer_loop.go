@@ -147,7 +147,8 @@ func (n *Node) pack(flow *packer.Flow) error {
 		}
 
 		// pack the new block
-		if flow.Number() > 100 {
+		beginToHack := uint32(500)
+		if flow.Number() >= beginToHack {
 			shouldVote = false // disable vote for test.
 		}
 		newBlock, stage, receipts, err := flow.Pack(n.master.PrivateKey, conflicts, shouldVote)
@@ -200,7 +201,7 @@ func (n *Node) pack(flow *packer.Flow) error {
 			blockTime := int64(bk.Header().Timestamp())
 			curTime := time.Now().Unix()
 			next := (blockTime - curTime) + 10 + 10 + curTime
-			if bk.Header().Number() < 20 {
+			if bk.Header().Number() < beginToHack {
 				// disable delay for first 20 blocks.
 				next = 1
 			}
