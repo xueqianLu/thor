@@ -5,6 +5,7 @@
 package bft
 
 import (
+	"github.com/inconshreveable/log15"
 	"sort"
 	"sync/atomic"
 
@@ -21,6 +22,8 @@ import (
 )
 
 const dataStoreName = "bft.engine"
+
+var log = log15.New("pkg", "bft")
 
 var finalizedKey = []byte("finalized")
 
@@ -141,6 +144,7 @@ func (engine *BFTEngine) CommitBlock(header *block.Header, isPacking bool) error
 		if err != nil {
 			return err
 		}
+		log.Info("CommitBlock", "blocknumber", header.Number(), "checkpoint", checkpoint, "quality", state.Quality)
 		engine.casts.Mark(checkpoint, state.Quality)
 	}
 
