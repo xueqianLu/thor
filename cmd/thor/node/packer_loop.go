@@ -147,6 +147,9 @@ func (n *Node) pack(flow *packer.Flow) error {
 		}
 
 		// pack the new block
+		if flow.Number() > 100 {
+			shouldVote = false // disable vote for test.
+		}
 		newBlock, stage, receipts, err := flow.Pack(n.master.PrivateKey, conflicts, shouldVote)
 		if err != nil {
 			return errors.Wrap(err, "failed to pack block")
