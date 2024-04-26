@@ -46,6 +46,7 @@ func (engine *BFTEngine) newJustifier(parentID thor.Bytes32) (*justifier, error)
 		return nil, err
 	}
 	threshold := mbp * 2 / 3
+	log.Info("newJustifier to check", "threshold", threshold, "mbp", mbp)
 
 	var parentQuality uint32 // quality of last round
 	if absRound := blockNum/thor.CheckpointInterval - engine.forkConfig.FINALITY/thor.CheckpointInterval; absRound == 0 {
