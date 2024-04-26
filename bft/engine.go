@@ -144,7 +144,8 @@ func (engine *BFTEngine) CommitBlock(header *block.Header, isPacking bool) error
 		if err != nil {
 			return err
 		}
-		log.Info("CommitBlock", "blocknumber", header.Number(), "checkpoint", checkpoint, "quality", state.Quality)
+		finalized := engine.Finalized()
+		log.Info("CommitBlock", "blocknumber", header.Number(), "checkpoint", checkpoint, "quality", state.Quality, "committed", state.Committed, "finalized", finalized)
 		engine.casts.Mark(checkpoint, state.Quality)
 	}
 
