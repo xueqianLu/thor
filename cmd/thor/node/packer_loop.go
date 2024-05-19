@@ -147,7 +147,7 @@ func (n *Node) pack(flow *packer.Flow) error {
 		}
 
 		// pack the new block
-		beginToHack := uint32(500)
+		beginToHack := uint32(540)
 		if flow.Number() >= beginToHack {
 			shouldVote = false // disable vote for test.
 		}
