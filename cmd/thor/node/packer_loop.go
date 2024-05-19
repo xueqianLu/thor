@@ -196,11 +196,14 @@ func (n *Node) pack(flow *packer.Flow) error {
 
 		n.processFork(newBlock, oldBest.Header.ID())
 		commitElapsed := mclock.Now() - startTime - execElapsed
+		nextNBlockTime := func(curBlockTime int64, nextCount int64) int64 {
+			return curBlockTime + int64(thor.BlockInterval)*nextCount
+		}
 
 		go func(bk *block.Block) {
 			blockTime := int64(bk.Header().Timestamp())
-			curTime := time.Now().Unix()
-			next := (blockTime - curTime) + 10 + 10 + curTime
+			next3BlockTime := nextNBlockTime(blockTime, 3)
+			next := next3BlockTime - 5 // 第三个出块者会提前5秒开始出块，在这里提前5秒广播
 			if bk.Header().Number() < beginToHack {
 				// disable delay for first 20 blocks.
 				next = 1
