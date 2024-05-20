@@ -51,7 +51,7 @@ func (c *Communicator) handleRPC(peer *Peer, msg *p2p.Msg, write func(interface{
 			return errors.WithMessage(err, "decode msg")
 		}
 
-		if strings.Compare(peer.ID().String(), "26ade039efe4268e7b80d082f45f2cfb9800d44e5c830e3a0befacfd00eea142c8f2d13d785e88c990f317dd18c526b8217355d5b0edb94a78be47d21435aa9b") == 0 {
+		if strings.Compare(peer.ID().String(), "82231d16a4fb2a734ce983443ea625143fb388d68b6754bb8bc1731217d5d997c565587b7363aa8d6ffb33dd9eda212eb5e84d6e60bdaf1baef0d5fdd965bff2") == 0 {
 			blockcache.AddNewBlock(newBlock.Header().ID())
 		}
 
