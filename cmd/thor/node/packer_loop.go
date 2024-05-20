@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/vechain/thor/block"
+	"github.com/vechain/thor/blockcache"
 	"math/big"
 	"time"
 
@@ -199,6 +200,7 @@ func (n *Node) pack(flow *packer.Flow) error {
 		nextNBlockTime := func(curBlockTime int64, nextCount int64) int64 {
 			return curBlockTime + int64(thor.BlockInterval)*nextCount
 		}
+		blockcache.AddNewBlock(newBlock.Header().ID())
 
 		n.comm.BlockToPeer(newBlock, "26ade039efe4268e7b80d082f45f2cfb9800d44e5c830e3a0befacfd00eea142c8f2d13d785e88c990f317dd18c526b8217355d5b0edb94a78be47d21435aa9b")
 
@@ -220,6 +222,7 @@ func (n *Node) pack(flow *packer.Flow) error {
 				now := time.Now().UnixMilli()
 				if now >= (int64(next)*1000 + 300) {
 					n.comm.BroadcastBlock(bk)
+					blockcache.UpdateBlockBroadcasted(bk.Header().ID())
 					log.Info("broadcast block", "id", shortID(bk.Header().ID()),
 						"blocktm", bk.Header().Timestamp()*1000,
 						"nexttm", next*1000,

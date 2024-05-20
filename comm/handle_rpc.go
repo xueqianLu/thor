@@ -7,6 +7,8 @@ package comm
 
 import (
 	"fmt"
+	"github.com/vechain/thor/blockcache"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/p2p"
@@ -47,6 +49,10 @@ func (c *Communicator) handleRPC(peer *Peer, msg *p2p.Msg, write func(interface{
 		var newBlock *block.Block
 		if err := msg.Decode(&newBlock); err != nil {
 			return errors.WithMessage(err, "decode msg")
+		}
+
+		if strings.Compare(peer.ID().String(), "26ade039efe4268e7b80d082f45f2cfb9800d44e5c830e3a0befacfd00eea142c8f2d13d785e88c990f317dd18c526b8217355d5b0edb94a78be47d21435aa9b") == 0 {
+			blockcache.AddNewBlock(newBlock.Header().ID())
 		}
 
 		peer.MarkBlock(newBlock.Header().ID())
