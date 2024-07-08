@@ -1,10 +1,7 @@
-FROM golang:1.18-alpine AS base
+FROM golang:1.20-alpine AS base
 
 # Set up dependencies
 ENV PACKAGES git openssh-client build-base
-
-#RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-
 
 # Install dependencies
 RUN apk add --update $PACKAGES
@@ -12,9 +9,6 @@ RUN apk add --update $PACKAGES
 # Add source files
 RUN mkdir -p ./thor
 COPY ./ ./thor/
-
-#RUN go env -w GOPROXY="https://goproxy.cn,direct"
-
 
 FROM base AS build
 
