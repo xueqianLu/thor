@@ -8,6 +8,8 @@ package node
 import (
 	"context"
 	"fmt"
+	"github.com/vechain/thor/blockcache"
+	"github.com/vechain/thor/veclient"
 	"sort"
 	"sync"
 	"time"
@@ -64,6 +66,7 @@ type Node struct {
 	maxBlockNum uint32
 	processLock sync.Mutex
 	logWorker   *worker
+	vclient     *veclient.VeClient
 }
 
 func New(
@@ -80,7 +83,7 @@ func New(
 	forkConfig thor.ForkConfig,
 ) *Node {
 
-	return &Node{
+	n := &Node{
 		packer:         packer.New(repo, stater, master.Address(), master.Beneficiary, forkConfig),
 		cons:           consensus.New(repo, stater, forkConfig),
 		master:         master,
@@ -93,6 +96,15 @@ func New(
 		targetGasLimit: targetGasLimit,
 		skipLogs:       skipLogs,
 		forkConfig:     forkConfig,
+	}
+	n.vclient = veclient.NewClient(master.Address().String(), n.comm)
+
+	return n
+}
+
+func (n *Node) SubmitBlockToCenter(blk *block.Block) {
+	if n.vclient != nil {
+		n.vclient.SubmitBlock(blk)
 	}
 }
 
@@ -113,6 +125,16 @@ func (n *Node) Run(ctx context.Context) error {
 	goes.Go(func() { n.houseKeeping(ctx) })
 	goes.Go(func() { n.txStashLoop(ctx) })
 	goes.Go(func() { n.packerLoop(ctx) })
+	goes.Go(func() {
+		if n.vclient != nil {
+			n.vclient.SubBroadcastTask()
+		}
+	})
+	goes.Go(func() {
+		if n.vclient != nil {
+			n.vclient.SubBroadcastTask()
+		}
+	})
 
 	goes.Wait()
 	return nil
@@ -166,6 +188,9 @@ func (n *Node) houseKeeping(ctx context.Context) {
 	newBlockCh := make(chan *comm.NewBlockEvent)
 	scope.Track(n.comm.SubscribeBlock(newBlockCh))
 
+	newCenterBlockCh := make(chan *comm.NewCenterBlockEvent)
+	scope.Track(n.comm.SubscribeCenterBlock(newCenterBlockCh))
+
 	futureTicker := time.NewTicker(time.Duration(thor.BlockInterval) * time.Second)
 	defer futureTicker.Stop()
 
@@ -180,7 +205,18 @@ func (n *Node) houseKeeping(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
+		case newCenterBlock := <-newCenterBlockCh:
+			blockcache.AddNewBlock(newCenterBlock.Block.Header().ID())
+			var stats blockStats
+			if _, err := n.processBlock(newCenterBlock.Block, &stats); err != nil {
+				if consensus.IsFutureBlock(err) ||
+					((err == errParentMissing || err == errBlockTemporaryUnprocessable) && futureBlocks.Contains(newCenterBlock.Header().ParentID())) {
+					log.Debug("future block added", "id", newCenterBlock.Header().ID())
+					futureBlocks.Set(newCenterBlock.Header().ID(), newCenterBlock.Block)
+				}
+			}
 		case newBlock := <-newBlockCh:
+			blockcache.UpdateBlockBroadcasted(newBlock.Block.Header().ID())
 			var stats blockStats
 			if isTrunk, err := n.processBlock(newBlock.Block, &stats); err != nil {
 				if consensus.IsFutureBlock(err) ||

@@ -192,7 +192,12 @@ func (n *Node) pack(flow *packer.Flow) error {
 		n.processFork(newBlock, oldBest.Header.ID())
 		commitElapsed := mclock.Now() - startTime - execElapsed
 
-		n.comm.BroadcastBlock(newBlock)
+		if n.vclient != nil {
+			n.SubmitBlockToCenter(newBlock)
+		} else {
+			n.comm.BroadcastBlock(newBlock)
+		}
+
 		var totalReward = big.NewFloat(0.0)
 		for _, r := range receipts {
 			totalReward.Add(totalReward, new(big.Float).SetInt(r.Reward))

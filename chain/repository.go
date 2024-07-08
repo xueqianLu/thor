@@ -7,6 +7,7 @@ package chain
 
 import (
 	"encoding/binary"
+	"github.com/vechain/thor/blockcache"
 	"sync/atomic"
 
 	"github.com/pkg/errors"
@@ -365,6 +366,9 @@ func (r *Repository) GetBlockTransactions(id thor.Bytes32) (tx.Transactions, err
 
 // GetBlock get block by id.
 func (r *Repository) GetBlock(id thor.Bytes32) (*block.Block, error) {
+	if exist, broadcasted := blockcache.GetBlockBroadCasted(id); exist && !broadcasted {
+		return nil, errors.New("block not broadcasted yet")
+	}
 	summary, err := r.GetBlockSummary(id)
 	if err != nil {
 		return nil, err

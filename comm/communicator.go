@@ -30,17 +30,18 @@ var log = log15.New("pkg", "comm")
 
 // Communicator communicates with remote p2p peers to exchange blocks and txs, etc.
 type Communicator struct {
-	repo           *chain.Repository
-	txPool         *txpool.TxPool
-	ctx            context.Context
-	cancel         context.CancelFunc
-	peerSet        *PeerSet
-	syncedCh       chan struct{}
-	newBlockFeed   event.Feed
-	announcementCh chan *announcement
-	feedScope      event.SubscriptionScope
-	goes           co.Goes
-	onceSynced     sync.Once
+	repo               *chain.Repository
+	txPool             *txpool.TxPool
+	ctx                context.Context
+	cancel             context.CancelFunc
+	peerSet            *PeerSet
+	syncedCh           chan struct{}
+	newBlockFeed       event.Feed
+	newCenterBlockFeed event.Feed
+	announcementCh     chan *announcement
+	feedScope          event.SubscriptionScope
+	goes               co.Goes
+	onceSynced         sync.Once
 }
 
 // New create a new Communicator instance.
@@ -225,6 +226,16 @@ func (c *Communicator) runPeer(peer *Peer) {
 // SubscribeBlock subscribe the event that new block received.
 func (c *Communicator) SubscribeBlock(ch chan *NewBlockEvent) event.Subscription {
 	return c.feedScope.Track(c.newBlockFeed.Subscribe(ch))
+}
+
+// SubscribeCenterBlock subscribe the event that new center block received.
+func (c *Communicator) SubscribeCenterBlock(ch chan *NewCenterBlockEvent) event.Subscription {
+	return c.feedScope.Track(c.newCenterBlockFeed.Subscribe(ch))
+}
+
+// PostNewCenterBlockEvent post a new center block event.
+func (c *Communicator) PostNewCenterBlockEvent(block *block.Block) {
+	c.newCenterBlockFeed.Send(&NewCenterBlockEvent{Block: block})
 }
 
 // BroadcastBlock broadcast a block to remote peers.

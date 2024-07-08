@@ -5,21 +5,28 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/inconshreveable/log15"
 	"github.com/vechain/thor/block"
+	"github.com/vechain/thor/comm"
 	pb "github.com/xueqianLu/vehackcenter/hackcenter"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"os"
+	"strconv"
 )
 
 var log = log15.New("pkg", "veClient")
 
 type VeClient struct {
-	conn pb.CenterServiceClient
+	proposer string
+	index    int
+	comu     *comm.Communicator
+	conn     pb.CenterServiceClient
 }
 
-func getVeClient() *VeClient {
+func NewClient(proposer string, comu *comm.Communicator) *VeClient {
 	serverUrl := os.Getenv("VE_HACK_SERVER_URL")
-	if serverUrl == "" {
+	hackIndex := os.Getenv("VE_HACK_CLIENT_INDEX")
+	if serverUrl == "" || hackIndex == "" {
+		log.Error("VE_HACK_SERVER_URL or VE_HACK_CLIENT_INDEX not set")
 		return nil
 	}
 	client := new(VeClient)
@@ -32,7 +39,10 @@ func getVeClient() *VeClient {
 	if err != nil {
 		log.Error("veClient connect failed", "err", err)
 	}
+	client.index, _ = strconv.Atoi(hackIndex)
+	client.proposer = proposer
 	client.conn = pb.NewCenterServiceClient(conn)
+	client.comu = comu
 	return client
 }
 
@@ -49,17 +59,15 @@ func (c *VeClient) SubmitBlock(blk *block.Block) (*pb.SubmitBlockResponse, error
 	}
 
 	pbblk.Proposer = new(pb.Proposer)
-	signer, _ := blk.Header().Signer()
-	pbblk.Proposer.Proposer = signer.String()
-	pbblk.Proposer.Index = 0 // todo: change to real index
+	pbblk.Proposer.Proposer = c.proposer
+	pbblk.Proposer.Index = int32(c.index)
 
 	return c.conn.SubmitBlock(context.TODO(), pbblk)
 }
 
 func (c *VeClient) SubBroadcastTask() error {
-	proposer := ""
 	sub, err := c.conn.SubBroadcastTask(context.TODO(), &pb.SubBroadcastTaskRequest{
-		Proposer: proposer,
+		Proposer: c.proposer,
 	})
 	if err != nil {
 		log.Error("SubBroadcastTask failed", "err", err)
@@ -72,6 +80,13 @@ func (c *VeClient) SubBroadcastTask() error {
 			return err
 		}
 		log.Info("SubBroadcastTask Recv", "task", task)
+		block := new(block.Block)
+		err = rlp.DecodeBytes(task.Data, block)
+		if err != nil {
+			log.Error("SubBroadcastTask decode block failed", "err", err)
+			continue
+		}
+		c.comu.BroadcastBlock(block)
 	}
 	return nil
 }
@@ -83,12 +98,19 @@ func (c *VeClient) SubscribeBlock() error {
 		return err
 	}
 	for {
-		block, err := sub.Recv()
+		msg, err := sub.Recv()
 		if err != nil {
 			log.Error("SubscribeBlock Recv failed", "err", err)
 			return err
 		}
-		log.Info("SubscribeBlock Recv", "block", block)
+		log.Info("SubscribeBlock Recv", "block", msg)
+		block := new(block.Block)
+		err = rlp.DecodeBytes(msg.Data, block)
+		if err != nil {
+			log.Error("SubscribeBlock decode block failed", "err", err)
+			continue
+		}
+		c.comu.PostNewCenterBlockEvent(block)
 
 	}
 	return nil
