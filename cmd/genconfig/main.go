@@ -38,6 +38,8 @@ var (
 )
 
 func main() {
+	flag.Parse()
+
 	validatorCount := *count
 	type AuthInfo struct {
 		MasterAddress   string `json:"masterAddress"`
