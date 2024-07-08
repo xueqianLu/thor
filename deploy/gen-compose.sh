@@ -2,7 +2,7 @@
 nodecnt=${1:-"7"}
 hacknodecnt=${2:-"2"}
 
-composefile=docker-compose-${nodecnt}.yml
+composefile=docker-compose.yml
 
 function addHeader() {
     echo 'version: "3.9"' > $composefile
