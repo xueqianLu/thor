@@ -6,6 +6,9 @@ ENV PACKAGES git openssh-client build-base
 # Install dependencies
 RUN apk add --update $PACKAGES
 
+# enable cgo
+ENV CGO_ENABLED=1
+
 # Add source files
 RUN mkdir -p ./thor
 COPY ./ ./thor/
