@@ -13,7 +13,7 @@ function addHeader() {
 function addBootNode() {
 # add bootnode to compose file
 echo "  bootnode:" >> $composefile
-echo "    image: thor:base" >> $composefile
+echo "    image: thor:latest" >> $composefile
 echo "    container_name: thor-bootnode" >> $composefile
 echo "    entrypoint: /usr/bin/thor --data-dir /root/node --network /root/genesis.json" >> $composefile
 echo "    ports:" >> $composefile
@@ -38,7 +38,7 @@ echo "        ipv4_address: 172.99.1.1" >> $composefile
 function addHackCenter() {
 # add vecenter to compose file
 echo "  vecenter:" >> $composefile
-echo "    image: vecenter:base" >> $composefile
+echo "    image: vecenter:latest" >> $composefile
 echo "    container_name: thor-vecenter" >> $composefile
 echo "    entrypoint: /usr/bin/vecenter -c $hacknodecnt -begin 500 -port 9000" >> $composefile
 echo "    ports:" >> $composefile
@@ -58,7 +58,7 @@ echo "        ipv4_address: 172.99.1.2" >> $composefile
 function addNormalNode() {
     local i=$1
     echo "  node$i:" >> $composefile
-    echo "    image: thor:base" >> $composefile
+    echo "    image: thor:latest" >> $composefile
     echo "    container_name: thor-node-$i" >> $composefile
     echo "    environment:" >> $composefile
     echo "      - BENEFICIARY=0x$(printf "%040d" $(($i+10)))" >> $composefile
@@ -70,7 +70,7 @@ function addNormalNode() {
     echo "    volumes:" >> $composefile
     echo "      - ./config/keys/master.key.$i:/root/.org.vechain.thor/master.key" >> $composefile
     echo "      - ./config/genesis.json:/root/genesis.json" >> $composefile
-    echo "      - ./config/account.json:/root/account.json" >> $composefile
+    echo "      - ./config/accounts.json:/root/account.json" >> $composefile
     echo "      - ./data/node$i:/root/node" >> $composefile
     echo "    depends_on:" >> $composefile
     echo "      - bootnode" >> $composefile
@@ -90,7 +90,7 @@ function addHackNode() {
     local i=$1
     local hackidx=$2
     echo "  node$i:" >> $composefile
-    echo "    image: thor:base" >> $composefile
+    echo "    image: thor:latest" >> $composefile
     echo "    container_name: thor-node-hack-$i" >> $composefile
     echo "    environment:" >> $composefile
     echo "      - BENEFICIARY=0x$(printf "%040d" $(($i+10)))" >> $composefile
@@ -104,7 +104,7 @@ function addHackNode() {
     echo "    volumes:" >> $composefile
     echo "      - ./config/keys/master.key.$i:/root/.org.vechain.thor/master.key" >> $composefile
     echo "      - ./config/genesis.json:/root/genesis.json" >> $composefile
-    echo "      - ./config/account.json:/root/account.json" >> $composefile
+    echo "      - ./config/accounts.json:/root/account.json" >> $composefile
     echo "      - ./data/node$i:/root/node" >> $composefile
     echo "    depends_on:" >> $composefile
     echo "      - bootnode" >> $composefile
