@@ -6,6 +6,7 @@
 package poa
 
 import (
+	"errors"
 	"github.com/vechain/thor/thor"
 )
 
@@ -31,15 +32,20 @@ func NewSchedulerSimp(
 	seed []byte, geneTime uint64) (*SchedulerSimp, error) {
 
 	var (
+		listed   = false
 		proposer Proposer
 	)
 
 	for _, p := range proposers {
 		if p.Address == addr {
 			proposer = p
+			listed = true
 		}
 	}
 	log.Info("scheduler simp", "proposer list", proposers, "proposer", proposer)
+	if !listed {
+		return nil, errors.New("unauthorized block proposer")
+	}
 	return &SchedulerSimp{
 		proposer,
 		parentBlockTime,
