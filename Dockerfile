@@ -1,7 +1,7 @@
 FROM golang:1.20-alpine AS base
 
 # Set up dependencies
-ENV PACKAGES git openssh-client build-base
+ENV PACKAGES build-base
 
 # Install dependencies
 RUN apk add --update $PACKAGES
