@@ -103,23 +103,23 @@ func (s *SchedulerSimp) IsScheduled(blockTime uint64, proposer thor.Address) boo
 // Updates returns proposers whose status are changed, and the score when new block time is assumed to be newBlockTime.
 func (s *SchedulerSimp) Updates(newBlockTime uint64) (updates []Proposer, score uint64) {
 	T := thor.BlockInterval
-
-	for i := uint64(0); i < uint64(len(s.proposers)); i++ {
-		if s.parentBlockTime+T+i*T >= newBlockTime {
-			break
-		}
-		if s.proposers[i].Address != s.proposer.Address {
-			updates = append(updates, Proposer{Address: s.proposers[i].Address, Active: false})
+	updated := make(map[thor.Address]bool)
+	for t := s.parentBlockTime; t < newBlockTime; t += T {
+		index := (t - s.geneTime - T) / T % uint64(len(s.proposers))
+		if s.proposers[index].Address != s.proposer.Address {
+			if updated[s.proposers[index].Address] == false {
+				updates = append(updates, Proposer{Address: s.proposers[index].Address, Active: false})
+				updated[s.proposers[index].Address] = true
+			}
 		}
 	}
-
-	score = uint64(len(s.proposers) - len(updates))
 
 	if !s.proposer.Active {
 		cpy := s.proposer
 		cpy.Active = true
 		updates = append(updates, cpy)
 	}
+	score = uint64(len(s.proposers) - len(updates))
 	log.Info("scheduler updates", "blockTime", newBlockTime, "len(proposers)", len(s.proposers), "score", score)
 	return
 }
