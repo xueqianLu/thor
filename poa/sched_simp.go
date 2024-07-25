@@ -60,9 +60,8 @@ func (s *SchedulerSimp) Schedule(nowTime uint64) (newBlockTime uint64) {
 	const T = thor.BlockInterval
 
 	newBlockTime = s.parentBlockTime + T
-	if nowTime > newBlockTime {
-		// ensure T aligned, and >= nowTime
-		newBlockTime += (nowTime - newBlockTime + T - 1) / T * T
+	for newBlockTime <= nowTime {
+		newBlockTime += T
 	}
 
 	offset := (newBlockTime-s.geneTime)/T - 1
