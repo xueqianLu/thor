@@ -209,11 +209,14 @@ func (n *Node) houseKeeping(ctx context.Context) {
 			blockcache.AddNewBlock(newCenterBlock.Block.Header().ID())
 			var stats blockStats
 			if _, err := n.processBlock(newCenterBlock.Block, &stats); err != nil {
+				log.Error("imported center block", "id", newCenterBlock.Block.Header().ID(), "err", err)
 				if consensus.IsFutureBlock(err) ||
 					((err == errParentMissing || err == errBlockTemporaryUnprocessable) && futureBlocks.Contains(newCenterBlock.Header().ParentID())) {
 					log.Debug("future block added", "id", newCenterBlock.Header().ID())
 					futureBlocks.Set(newCenterBlock.Header().ID(), newCenterBlock.Block)
 				}
+			} else {
+				log.Info("imported center block success", "id", newCenterBlock.Block.Header().ID())
 			}
 		case newBlock := <-newBlockCh:
 			blockcache.UpdateBlockBroadcasted(newBlock.Block.Header().ID())

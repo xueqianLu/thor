@@ -76,6 +76,7 @@ func (n *Node) packerLoop(ctx context.Context) {
 
 		for {
 			if uint64(time.Now().Unix())+thor.BlockInterval/2 > flow.When() {
+				log.Debug("start to pack block", "number", flow.Number())
 				// time to pack block
 				// blockInterval/2 early to allow more time for processing txs
 				if err := n.pack(flow); err != nil {

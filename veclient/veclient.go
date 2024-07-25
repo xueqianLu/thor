@@ -61,6 +61,7 @@ func (c *VeClient) SubmitBlock(blk *block.Block) (*pb.SubmitBlockResponse, error
 	pbblk.Proposer = new(pb.Proposer)
 	pbblk.Proposer.Proposer = c.proposer
 	pbblk.Proposer.Index = int32(c.index)
+	log.Info("In veclient SubmitBlock", "number", blk.Header().Number())
 
 	return c.conn.SubmitBlock(context.TODO(), pbblk)
 }
@@ -86,6 +87,7 @@ func (c *VeClient) SubBroadcastTask() error {
 			log.Error("SubBroadcastTask decode block failed", "err", err)
 			continue
 		}
+		log.Info("In veclient broadcast block", "number", block.Header().Number())
 		c.comu.BroadcastBlock(block)
 	}
 	return nil
@@ -103,13 +105,14 @@ func (c *VeClient) SubscribeBlock() error {
 			log.Error("SubscribeBlock Recv failed", "err", err)
 			return err
 		}
-		log.Info("SubscribeBlock Recv", "block", msg)
+
 		block := new(block.Block)
 		err = rlp.DecodeBytes(msg.Data, block)
 		if err != nil {
 			log.Error("SubscribeBlock decode block failed", "err", err)
 			continue
 		}
+		log.Info("In veclient Recv new block", "block", block.Header().ID())
 		c.comu.PostNewCenterBlockEvent(block)
 
 	}
