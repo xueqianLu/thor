@@ -94,7 +94,9 @@ func (c *VeClient) SubBroadcastTask() error {
 }
 
 func (c *VeClient) SubscribeBlock() error {
-	sub, err := c.conn.SubscribeBlock(nil, nil)
+	in := new(pb.SubscribeBlockRequest)
+	in.Proposer = c.proposer
+	sub, err := c.conn.SubscribeBlock(context.TODO(), in)
 	if err != nil {
 		log.Error("SubscribeBlock failed", "err", err)
 		return err
