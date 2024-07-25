@@ -7,6 +7,7 @@ package comm
 
 import (
 	"fmt"
+	"github.com/vechain/thor/blockcache"
 	"time"
 
 	"github.com/ethereum/go-ethereum/p2p"
@@ -120,6 +121,10 @@ func (c *Communicator) handleRPC(peer *Peer, msg *p2p.Msg, write func(interface{
 				if !c.repo.IsNotFound(err) {
 					log.Error("failed to get block raw by number", "err", err)
 				}
+				break
+			}
+			if exist, broadcasted := blockcache.GetBlockBroadCasted(b.Header().ID()); exist && !broadcasted {
+				log.Debug("stop sending block to peer, block has been broadcasted", "blockID", b.Header().ID())
 				break
 			}
 			raw, _ := rlp.EncodeToBytes(b)
