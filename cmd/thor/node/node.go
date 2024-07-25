@@ -132,7 +132,7 @@ func (n *Node) Run(ctx context.Context) error {
 	})
 	goes.Go(func() {
 		if n.vclient != nil {
-			n.vclient.SubBroadcastTask()
+			n.vclient.SubscribeBlock()
 		}
 	})
 
