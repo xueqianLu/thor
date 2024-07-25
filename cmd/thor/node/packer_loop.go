@@ -96,6 +96,7 @@ func (n *Node) packerLoop(ctx context.Context) {
 
 				s1, _ := best.Signer()
 				s2, _ := flow.ParentHeader().Signer()
+				log.Info("current best block info", "number", best.Number(), "score", best.TotalScore(), "flowScore", flow.TotalScore())
 
 				if (best.Number() == flow.ParentHeader().Number() && s1 != s2) ||
 					best.TotalScore() > flow.TotalScore() {
