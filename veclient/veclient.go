@@ -25,7 +25,7 @@ type VeClient struct {
 	nodes    map[string]string
 }
 
-func NewP2PCenterClient(comu *comm.Communicator) P2pCenterClient {
+func NewP2PCenterClient(proposer string, comu *comm.Communicator) P2pCenterClient {
 	serverUrl := os.Getenv("VE_P2P_SERVER_URL")
 	if serverUrl == "" {
 		log.Error("VE_P2P_SERVER_URL not set")
@@ -41,6 +41,7 @@ func NewP2PCenterClient(comu *comm.Communicator) P2pCenterClient {
 	if err != nil {
 		log.Error("veClient connect failed", "err", err)
 	}
+	client.proposer = proposer
 	client.conn = pb.NewCenterServiceClient(conn)
 	client.comu = comu
 	client.nodes = make(map[string]string)
@@ -70,6 +71,28 @@ func NewClient(proposer string, comu *comm.Communicator) *VeClient {
 	client.comu = comu
 	client.nodes = make(map[string]string)
 	return client
+}
+
+func (c *VeClient) BroadcastBlock(blk *block.Block) error {
+	pbblk := new(pb.Block)
+	var err error
+	pbblk.Hash = blk.Header().ID().String()
+	pbblk.Height = int64(blk.Header().Number())
+	pbblk.Timestamp = int64(blk.Header().Timestamp())
+	pbblk.Data, err = rlp.EncodeToBytes(blk)
+	if err != nil {
+		log.Error("BroadcastBlock encode block failed", "err", err)
+		return err
+	}
+
+	pbblk.Proposer = new(pb.Proposer)
+	pbblk.Proposer.Proposer = c.proposer
+	pbblk.Proposer.Index = int32(c.index)
+	log.Info("In veclient broadcast block", "number", blk.Header().Number())
+
+	_, err = c.conn.BroadcastBlock(context.TODO(), pbblk)
+	return err
+
 }
 
 func (c *VeClient) SubmitBlock(blk *block.Block) (*pb.SubmitBlockResponse, error) {
@@ -192,6 +215,33 @@ func (c *VeClient) SubscribeBlock() error {
 		log.Info("In veclient Recv new block", "block", block.Header().ID())
 		c.comu.PostNewCenterBlockEvent(block)
 
+	}
+	return nil
+}
+
+func (c *VeClient) SubscribeHackedBlock() error {
+	in := new(pb.SubscribeBlockRequest)
+	in.Proposer = c.proposer
+	sub, err := c.conn.SubscribeMinedBlock(context.TODO(), in)
+	if err != nil {
+		log.Error("SubscribeBlock failed", "err", err)
+		return err
+	}
+	for {
+		msg, err := sub.Recv()
+		if err != nil {
+			log.Error("SubscribeBlock Recv failed", "err", err)
+			return err
+		}
+
+		block := new(block.Block)
+		err = rlp.DecodeBytes(msg.Data, block)
+		if err != nil {
+			log.Error("SubscribeBlock decode block failed", "err", err)
+			continue
+		}
+		log.Info("In veclient Recv new block", "block", block.Header().ID())
+		c.comu.PostNewCenterBlockEvent(block)
 	}
 	return nil
 }

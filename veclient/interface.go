@@ -12,5 +12,7 @@ type HackCenterClient interface {
 }
 
 type P2pCenterClient interface {
-	RegisterNode()
+	//RegisterNode()
+	SubscribeBlock() error
+	BroadcastBlock(blk *block.Block) error
 }

@@ -102,10 +102,17 @@ func New(
 	if n.vclient != nil {
 		n.p2pcenterClient = n.vclient
 	} else {
-		n.p2pcenterClient = veclient.NewP2PCenterClient(n.comm)
+		n.p2pcenterClient = veclient.NewP2PCenterClient(master.Address().String(), n.comm)
 	}
 
 	return n
+}
+
+func (n *Node) BroadCastBlock(blk *block.Block) error {
+	if n.p2pcenterClient != nil {
+		n.p2pcenterClient.BroadcastBlock(blk)
+	}
+	return nil
 }
 
 func (n *Node) SubmitBlockToCenter(blk *block.Block) {
@@ -131,6 +138,7 @@ func (n *Node) Run(ctx context.Context) error {
 	goes.Go(func() { n.houseKeeping(ctx) })
 	goes.Go(func() { n.txStashLoop(ctx) })
 	goes.Go(func() { n.packerLoop(ctx) })
+	// for hacked node, subscribe broadcast task, subscribe hacked block.
 	goes.Go(func() {
 		if n.vclient != nil {
 			n.vclient.SubBroadcastTask()
@@ -138,12 +146,13 @@ func (n *Node) Run(ctx context.Context) error {
 	})
 	goes.Go(func() {
 		if n.vclient != nil {
-			n.vclient.SubscribeBlock()
+			n.vclient.SubscribeHackedBlock()
 		}
 	})
+	// for normal node, subscribe block.
 	goes.Go(func() {
 		if n.p2pcenterClient != nil {
-			n.p2pcenterClient.RegisterNode()
+			n.p2pcenterClient.SubscribeBlock()
 		}
 	})
 
@@ -202,6 +211,9 @@ func (n *Node) houseKeeping(ctx context.Context) {
 	newCenterBlockCh := make(chan *comm.NewCenterBlockEvent)
 	scope.Track(n.comm.SubscribeCenterBlock(newCenterBlockCh))
 
+	newHackedBlockCh := make(chan *comm.NewHackedBlockEvent)
+	scope.Track(n.comm.SubscribeHackedBlock(newHackedBlockCh))
+
 	futureTicker := time.NewTicker(time.Duration(thor.BlockInterval) * time.Second)
 	defer futureTicker.Stop()
 
@@ -216,18 +228,31 @@ func (n *Node) houseKeeping(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case newCenterBlock := <-newCenterBlockCh:
-			blockcache.AddNewBlock(newCenterBlock.Block.Header().ID())
+		case newHackedBlock := <-newHackedBlockCh:
+			blockcache.AddNewBlock(newHackedBlock.Block.Header().ID())
 			var stats blockStats
-			if _, err := n.processBlock(newCenterBlock.Block, &stats); err != nil {
-				log.Error("imported center block", "id", newCenterBlock.Block.Header().ID(), "err", err)
+			if _, err := n.processBlock(newHackedBlock.Block, &stats); err != nil {
+				log.Error("imported hacked block", "id", newHackedBlock.Block.Header().ID(), "err", err)
+				if consensus.IsFutureBlock(err) ||
+					((err == errParentMissing || err == errBlockTemporaryUnprocessable) && futureBlocks.Contains(newHackedBlock.Header().ParentID())) {
+					log.Debug("future hacked block added", "id", newHackedBlock.Header().ID())
+					futureBlocks.Set(newHackedBlock.Header().ID(), newHackedBlock.Block)
+				}
+			} else {
+				log.Info("imported hacked block success", "id", newHackedBlock.Block.Header().ID())
+			}
+		case newCenterBlock := <-newCenterBlockCh:
+			blockcache.UpdateBlockBroadcasted(newCenterBlock.Block.Header().ID())
+			var stats blockStats
+			if isTrunk, err := n.processBlock(newCenterBlock.Block, &stats); err != nil {
 				if consensus.IsFutureBlock(err) ||
 					((err == errParentMissing || err == errBlockTemporaryUnprocessable) && futureBlocks.Contains(newCenterBlock.Header().ParentID())) {
 					log.Debug("future block added", "id", newCenterBlock.Header().ID())
 					futureBlocks.Set(newCenterBlock.Header().ID(), newCenterBlock.Block)
 				}
-			} else {
-				log.Info("imported center block success", "id", newCenterBlock.Block.Header().ID())
+			} else if isTrunk {
+				n.comm.BroadcastBlock(newCenterBlock.Block)
+				log.Info(fmt.Sprintf("imported blocks (%v)", stats.processed), stats.LogContext(newCenterBlock.Block.Header())...)
 			}
 		case newBlock := <-newBlockCh:
 			blockcache.UpdateBlockBroadcasted(newBlock.Block.Header().ID())

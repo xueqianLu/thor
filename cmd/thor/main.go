@@ -226,7 +226,7 @@ func defaultAction(ctx *cli.Context) error {
 	optimizer := optimizer.New(mainDB, repo, !ctx.Bool(disablePrunerFlag.Name))
 	defer func() { log.Info("stopping optimizer..."); optimizer.Stop() }()
 
-	return node.New(
+	n := node.New(
 		master,
 		repo,
 		bftEngine,
@@ -237,7 +237,11 @@ func defaultAction(ctx *cli.Context) error {
 		p2pcom.comm,
 		uint64(ctx.Int(targetGasLimitFlag.Name)),
 		skipLogs,
-		forkConfig).Run(exitSignal)
+		forkConfig)
+
+	p2pcom.comm.SetBroadcastFunc(n.BroadCastBlock)
+
+	return n.Run(exitSignal)
 }
 
 func soloAction(ctx *cli.Context) error {

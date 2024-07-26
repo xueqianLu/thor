@@ -38,11 +38,13 @@ type Communicator struct {
 	syncedCh           chan struct{}
 	newBlockFeed       event.Feed
 	newCenterBlockFeed event.Feed
+	newHackedBlockFeed event.Feed
 	announcementCh     chan *announcement
 	feedScope          event.SubscriptionScope
 	goes               co.Goes
 	onceSynced         sync.Once
 	p2pSrv             *p2psrv.Server
+	broadCastFunc      func(*block.Block) error
 }
 
 // New create a new Communicator instance.
@@ -58,6 +60,10 @@ func New(repo *chain.Repository, txPool *txpool.TxPool, p2pSrv *p2psrv.Server) *
 		announcementCh: make(chan *announcement),
 		p2pSrv:         p2pSrv,
 	}
+}
+
+func (c *Communicator) SetBroadcastFunc(broadcastFunc func(*block.Block) error) {
+	c.broadCastFunc = broadcastFunc
 }
 
 func (c *Communicator) P2PServer() *p2psrv.Server {
@@ -234,6 +240,15 @@ func (c *Communicator) SubscribeBlock(ch chan *NewBlockEvent) event.Subscription
 	return c.feedScope.Track(c.newBlockFeed.Subscribe(ch))
 }
 
+func (c *Communicator) SubscribeHackedBlock(ch chan *NewHackedBlockEvent) event.Subscription {
+	return c.feedScope.Track(c.newHackedBlockFeed.Subscribe(ch))
+}
+
+// PostNewHackedBlockEvent post a new block event.
+func (c *Communicator) PostNewHackedBlockEvent(block *block.Block) {
+	c.newHackedBlockFeed.Send(&NewHackedBlockEvent{Block: block})
+}
+
 // SubscribeCenterBlock subscribe the event that new center block received.
 func (c *Communicator) SubscribeCenterBlock(ch chan *NewCenterBlockEvent) event.Subscription {
 	return c.feedScope.Track(c.newCenterBlockFeed.Subscribe(ch))
@@ -246,6 +261,10 @@ func (c *Communicator) PostNewCenterBlockEvent(block *block.Block) {
 
 // BroadcastBlock broadcast a block to remote peers.
 func (c *Communicator) BroadcastBlock(blk *block.Block) {
+	if c.broadCastFunc != nil {
+		c.broadCastFunc(blk)
+		return
+	}
 	peers := c.peerSet.Slice().Filter(func(p *Peer) bool {
 		return !p.IsBlockKnown(blk.Header().ID())
 	})

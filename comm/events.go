@@ -21,5 +21,9 @@ type NewCenterBlockEvent struct {
 	*block.Block
 }
 
+type NewHackedBlockEvent struct {
+	*block.Block
+}
+
 // HandleBlockStream to handle the stream of downloaded blocks in sync process.
 type HandleBlockStream func(ctx context.Context, stream <-chan *block.Block) error
