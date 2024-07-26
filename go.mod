@@ -33,7 +33,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/xueqianLu/vehackcenter v0.0.1
+require github.com/xueqianLu/vehackcenter v0.0.3
 
 require (
 	github.com/aristanetworks/goarista v0.0.0-20180222005525-c41ed3986faa // indirect
@@ -67,3 +67,5 @@ replace github.com/syndtr/goleveldb => github.com/vechain/goleveldb v1.0.1-0.202
 replace github.com/ethereum/go-ethereum => github.com/vechain/go-ethereum v1.8.15-0.20231201045034-e7f453ab60bc
 
 replace github.com/mattn/go-sqlite3 => github.com/leso-kn/go-sqlite3 v0.0.0-20230710125852-03158dc838ed
+
+//replace github.com/xueqianLu/vehackcenter => ../../../../work/luxq/vehackcenter

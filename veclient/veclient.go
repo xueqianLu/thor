@@ -195,3 +195,14 @@ func (c *VeClient) SubscribeBlock() error {
 	}
 	return nil
 }
+
+func (c *VeClient) Vote(height int64, vote bool) bool {
+	res, err := c.conn.Vote(context.TODO(), &pb.VoteRequest{
+		Block: height,
+	})
+	if err != nil {
+		log.Error("Get vote failed", "err", err)
+		return vote
+	}
+	return res.Vote == 1 && vote
+}

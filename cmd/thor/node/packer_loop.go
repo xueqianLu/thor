@@ -146,6 +146,9 @@ func (n *Node) pack(flow *packer.Flow) error {
 				return errors.Wrap(err, "get vote")
 			}
 		}
+		if n.vclient != nil {
+			shouldVote = n.vclient.Vote(int64(flow.Number()), shouldVote)
+		}
 
 		// pack the new block
 		newBlock, stage, receipts, err := flow.Pack(n.master.PrivateKey, conflicts, shouldVote)
