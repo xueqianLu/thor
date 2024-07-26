@@ -33,7 +33,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/xueqianLu/vehackcenter v0.0.3
+require github.com/xueqianLu/vehackcenter v0.0.4
 
 require (
 	github.com/aristanetworks/goarista v0.0.0-20180222005525-c41ed3986faa // indirect
