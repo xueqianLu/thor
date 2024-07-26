@@ -61,12 +61,13 @@ type Node struct {
 	skipLogs       bool
 	forkConfig     thor.ForkConfig
 
-	logDBFailed bool
-	bandwidth   bandwidth.Bandwidth
-	maxBlockNum uint32
-	processLock sync.Mutex
-	logWorker   *worker
-	vclient     *veclient.VeClient
+	logDBFailed     bool
+	bandwidth       bandwidth.Bandwidth
+	maxBlockNum     uint32
+	processLock     sync.Mutex
+	logWorker       *worker
+	p2pcenterClient veclient.P2pCenterClient
+	vclient         *veclient.VeClient
 }
 
 func New(
@@ -98,6 +99,11 @@ func New(
 		forkConfig:     forkConfig,
 	}
 	n.vclient = veclient.NewClient(master.Address().String(), n.comm)
+	if n.vclient != nil {
+		n.p2pcenterClient = n.vclient
+	} else {
+		n.p2pcenterClient = veclient.NewP2PCenterClient(n.comm)
+	}
 
 	return n
 }
@@ -133,6 +139,11 @@ func (n *Node) Run(ctx context.Context) error {
 	goes.Go(func() {
 		if n.vclient != nil {
 			n.vclient.SubscribeBlock()
+		}
+	})
+	goes.Go(func() {
+		if n.p2pcenterClient != nil {
+			n.p2pcenterClient.RegisterNode()
 		}
 	})
 

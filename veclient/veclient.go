@@ -2,6 +2,7 @@ package veclient
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/p2p/discover"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/inconshreveable/log15"
 	"github.com/vechain/thor/block"
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"os"
 	"strconv"
+	"time"
 )
 
 var log = log15.New("pkg", "veClient")
@@ -20,6 +22,29 @@ type VeClient struct {
 	index    int
 	comu     *comm.Communicator
 	conn     pb.CenterServiceClient
+	nodes    map[string]string
+}
+
+func NewP2PCenterClient(comu *comm.Communicator) P2pCenterClient {
+	serverUrl := os.Getenv("VE_P2P_SERVER_URL")
+	if serverUrl == "" {
+		log.Error("VE_P2P_SERVER_URL not set")
+		return nil
+	}
+	client := new(VeClient)
+	conn, err := grpc.Dial(serverUrl,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(1024*1024*1024),
+			grpc.MaxCallSendMsgSize(1024*1024*1024)),
+	)
+	if err != nil {
+		log.Error("veClient connect failed", "err", err)
+	}
+	client.conn = pb.NewCenterServiceClient(conn)
+	client.comu = comu
+	client.nodes = make(map[string]string)
+	return client
 }
 
 func NewClient(proposer string, comu *comm.Communicator) *VeClient {
@@ -43,6 +68,7 @@ func NewClient(proposer string, comu *comm.Communicator) *VeClient {
 	client.proposer = proposer
 	client.conn = pb.NewCenterServiceClient(conn)
 	client.comu = comu
+	client.nodes = make(map[string]string)
 	return client
 }
 
@@ -91,6 +117,55 @@ func (c *VeClient) SubBroadcastTask() error {
 		c.comu.BroadcastBlock(block)
 	}
 	return nil
+}
+
+func (c *VeClient) RegisterNode() {
+	srv := c.comu.P2PServer()
+	nodes, err := c.conn.RegisterNode(context.TODO(), &pb.NodeRegisterInfo{
+		Node: srv.Self().String(),
+	})
+	if err != nil {
+		log.Error("RegisterNode failed", "err", err)
+		return
+	}
+
+	addNode := func(node string) error {
+		n, err := discover.ParseNode(node)
+		if err != nil {
+			log.Error("parse node failed", "err", err, "node", node)
+			return err
+		}
+		srv.AddStatic(n)
+		return nil
+	}
+	for _, node := range nodes.Nodes {
+		if _, ok := c.nodes[node]; !ok {
+			if err := addNode(node); err == nil {
+				c.nodes[node] = node
+			}
+		}
+	}
+	t := time.NewTicker(time.Second * 2)
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			nodes, err := c.conn.FetchNode(context.TODO(), &pb.FetchNodeRequest{
+				Self: srv.Self().String(),
+			})
+			if err != nil {
+				log.Error("FetchNode failed", "err", err)
+				continue
+			}
+			for _, node := range nodes.Nodes {
+				if _, ok := c.nodes[node]; !ok {
+					if err := addNode(node); err == nil {
+						c.nodes[node] = node
+					}
+				}
+			}
+		}
+	}
 }
 
 func (c *VeClient) SubscribeBlock() error {

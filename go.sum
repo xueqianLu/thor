@@ -142,8 +142,8 @@ github.com/vechain/go-ethereum v1.8.15-0.20231201045034-e7f453ab60bc h1:ozDvptqz
 github.com/vechain/go-ethereum v1.8.15-0.20231201045034-e7f453ab60bc/go.mod h1:EhX+lSkpNdEIxu1zOXtiFZu5nv1i8MX1mQA/qhUE+gw=
 github.com/vechain/goleveldb v1.0.1-0.20220809091043-51eb019c8655 h1:CbHcWpCi7wOYfpoErRABh3Slyq9vO0Ay/EHN5GuJSXQ=
 github.com/vechain/goleveldb v1.0.1-0.20220809091043-51eb019c8655/go.mod h1:RRCYJbIwD5jmqPI9XoAFR0OcDxqUctll6zUj/+B4S48=
-github.com/xueqianLu/vehackcenter v0.0.0-20240705061830-6f154617fd39 h1:3oTG92NmKrg6EnNSqKgqEFhJ6Wgu9k5FJlcwjffXOBU=
-github.com/xueqianLu/vehackcenter v0.0.0-20240705061830-6f154617fd39/go.mod h1:IOBoRiClF3WEJRiVMv3KDZ8gwhR9cfEnsWei/Q57n6I=
+github.com/xueqianLu/vehackcenter v0.0.1 h1:Ed41qgN0x0Qy8ykLfTtlHlKRYGIA46a+tc/ARFTj0s8=
+github.com/xueqianLu/vehackcenter v0.0.1/go.mod h1:IOBoRiClF3WEJRiVMv3KDZ8gwhR9cfEnsWei/Q57n6I=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=

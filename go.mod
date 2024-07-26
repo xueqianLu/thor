@@ -25,7 +25,6 @@ require (
 	github.com/stretchr/testify v1.7.2
 	github.com/syndtr/goleveldb v1.0.1-0.20220614013038-64ee5596c38a
 	github.com/vechain/go-ecvrf v0.0.0-20220525125849-96fa0442e765
-	github.com/xueqianLu/vehackcenter v0.0.0-20240705061830-6f154617fd39
 	golang.org/x/crypto v0.19.0
 	golang.org/x/sys v0.17.0
 	google.golang.org/grpc v1.63.2
@@ -33,6 +32,8 @@ require (
 	gopkg.in/urfave/cli.v1 v1.20.0
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+require github.com/xueqianLu/vehackcenter v0.0.1
 
 require (
 	github.com/aristanetworks/goarista v0.0.0-20180222005525-c41ed3986faa // indirect

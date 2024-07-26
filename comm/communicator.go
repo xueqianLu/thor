@@ -8,7 +8,7 @@ package comm
 import (
 	"context"
 	"fmt"
-	"math"
+	"github.com/vechain/thor/p2psrv"
 	"sort"
 	"sync"
 	"time"
@@ -42,10 +42,11 @@ type Communicator struct {
 	feedScope          event.SubscriptionScope
 	goes               co.Goes
 	onceSynced         sync.Once
+	p2pSrv             *p2psrv.Server
 }
 
 // New create a new Communicator instance.
-func New(repo *chain.Repository, txPool *txpool.TxPool) *Communicator {
+func New(repo *chain.Repository, txPool *txpool.TxPool, p2pSrv *p2psrv.Server) *Communicator {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Communicator{
 		repo:           repo,
@@ -55,7 +56,12 @@ func New(repo *chain.Repository, txPool *txpool.TxPool) *Communicator {
 		peerSet:        newPeerSet(),
 		syncedCh:       make(chan struct{}),
 		announcementCh: make(chan *announcement),
+		p2pSrv:         p2pSrv,
 	}
+}
+
+func (c *Communicator) P2PServer() *p2psrv.Server {
+	return c.p2pSrv
 }
 
 // Synced returns a channel indicates if synchronization process passed.
@@ -244,7 +250,9 @@ func (c *Communicator) BroadcastBlock(blk *block.Block) {
 		return !p.IsBlockKnown(blk.Header().ID())
 	})
 
-	p := int(math.Sqrt(float64(len(peers))))
+	// luxq: modified to broadcast block to every peer.
+	p := len(peers)
+	//p := int(math.Sqrt(float64(len(peers))))
 	toPropagate := peers[:p]
 	toAnnounce := peers[p:]
 

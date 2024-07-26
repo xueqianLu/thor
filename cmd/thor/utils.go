@@ -469,9 +469,11 @@ func newP2PComm(ctx *cli.Context, repo *chain.Repository, txPool *txpool.TxPool,
 		}
 	}
 
+	p2pSrv := p2psrv.New(opts)
+
 	return &p2pComm{
-		comm:           comm.New(repo, txPool),
-		p2pSrv:         p2psrv.New(opts),
+		comm:           comm.New(repo, txPool, p2pSrv),
+		p2pSrv:         p2pSrv,
 		peersCachePath: peersCachePath,
 		enode:          fmt.Sprintf("enode://%x@[extip]:%v", discover.PubkeyID(&key.PublicKey).Bytes(), ctx.Int(p2pPortFlag.Name)),
 	}, nil
