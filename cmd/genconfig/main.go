@@ -66,7 +66,7 @@ func main() {
 		acckey := &node.Master{PrivateKey: key}
 		accounts = append(accounts, AccountInfo{
 			Name:    fmt.Sprintf("account-%d", i),
-			Private: key.D.String(),
+			Private: key.D.Text(16),
 			Address: acckey.Address().String(),
 		})
 	}
