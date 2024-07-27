@@ -51,8 +51,17 @@ func main() {
 	tc := time.NewTicker(time.Second * 5)
 	nonce := uint64(time.Now().Unix())
 	defer tc.Stop()
+	var err error
 
-	chainTag = getChainTag(*url)
+	for {
+		chainTag, err = getChainTag(*url)
+		if err == nil {
+
+			break
+		}
+		time.Sleep(time.Second * 5)
+	}
+
 	for {
 		select {
 		case <-tc.C:

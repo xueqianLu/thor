@@ -34,26 +34,32 @@ type BlockInfo struct {
 	ID     string `json:"id"`
 }
 
-func getChainTag(url string) byte {
+func getChainTag(url string) (byte, error) {
 	api := fmt.Sprintf("%s/blocks/0", url)
-	res := httpGet(api)
+	res, err := httpGet(api)
+	if err != nil {
+		return 0x00, err
+	}
 	var genInfo BlockInfo
-	if err := json.Unmarshal(res, &genInfo); err != nil {
-		log.Fatalf("json.Unmarshal genesis info: %v", err)
+	if err = json.Unmarshal(res, &genInfo); err != nil {
+		log.Printf("json.Unmarshal genesis info: %v", err)
+		return 0x00, err
 	}
 	id := common.FromHex(genInfo.ID)
-	return id[31]
+	return id[31], nil
 }
 
-func httpGet(url string) []byte {
+func httpGet(url string) ([]byte, error) {
 	res, err := http.Get(url)
 	if err != nil {
-		log.Fatalf("http.Get: %v", err)
+		log.Printf("http.Get: %v", err)
+		return nil, err
 	}
 	r, err := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		log.Fatalf("ioutil.ReadAll: %v", err)
+		log.Printf("ioutil.ReadAll: %v", err)
+		return nil, err
 	}
-	return r
+	return r, nil
 }
