@@ -64,7 +64,7 @@ function addNormalNode() {
     echo "      - BENEFICIARY=0x$(printf "%040d" $(($i+10)))" >> $composefile
     echo "      - BOOTNODE=enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235" >> $composefile
     echo "      - ACCOUNT_IDX=$i" >> $composefile
-    echo "      - VE_P2P_SERVER_URL=http://vecenter:9000" >> $composefile
+    echo "      - VE_P2P_SERVER_URL=vecenter:9000" >> $composefile
     echo "    ports:" >> $composefile
     echo "      - \"$(($i+10000)):8669\"" >> $composefile
     echo "      - \"$(($i+20000)):11235\"" >> $composefile
@@ -98,7 +98,7 @@ function addHackNode() {
     echo "      - BENEFICIARY=0x$(printf "%040d" $(($i+10)))" >> $composefile
     echo "      - BOOTNODE=enode://bc18b2d7dd0daf50073f53f5c8e7aecb41387275efb5fd0e41ec3b87ce2804353692c38a9774777ce39ba0de61648cd7adc70d3fc29692b46c5f520f542a7824@172.99.1.1:11235" >> $composefile
     echo "      - ACCOUNT_IDX=$i" >> $composefile
-    echo "      - VE_HACK_SERVER_URL=http://vecenter:9000" >> $composefile
+    echo "      - VE_HACK_SERVER_URL=vecenter:9000" >> $composefile
     echo "      - VE_HACK_CLIENT_INDEX=$hackidx" >> $composefile
     echo "    ports:" >> $composefile
     echo "      - \"$(($i+10000)):8669\"" >> $composefile
