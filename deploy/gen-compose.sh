@@ -40,7 +40,7 @@ function addHackCenter() {
 echo "  vecenter:" >> $composefile
 echo "    image: vecenter:latest" >> $composefile
 echo "    container_name: thor-vecenter" >> $composefile
-echo "    entrypoint: /usr/bin/vecenter -c $hacknodecnt -begin 500 -port 9000" >> $composefile
+echo "    entrypoint: /usr/bin/vecenter -c $hacknodecnt -begin 50 -port 9000" >> $composefile
 echo "    ports:" >> $composefile
 echo "      - \"9000:9000\"" >> $composefile
 echo "    deploy:" >> $composefile
@@ -75,6 +75,7 @@ function addNormalNode() {
     echo "      - ./data/node$i:/root/node" >> $composefile
     echo "    depends_on:" >> $composefile
     echo "      - bootnode" >> $composefile
+    echo "      - vecenter" >> $composefile
     echo "    deploy:" >> $composefile
     echo "      restart_policy:" >> $composefile
     echo "        condition: on-failure" >> $composefile
@@ -109,6 +110,7 @@ function addHackNode() {
     echo "      - ./data/node$i:/root/node" >> $composefile
     echo "    depends_on:" >> $composefile
     echo "      - bootnode" >> $composefile
+    echo "      - vecenter" >> $composefile
     echo "    deploy:" >> $composefile
     echo "      restart_policy:" >> $composefile
     echo "        condition: on-failure" >> $composefile
