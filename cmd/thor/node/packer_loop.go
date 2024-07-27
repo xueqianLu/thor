@@ -200,7 +200,9 @@ func (n *Node) pack(flow *packer.Flow) error {
 		if n.vclient != nil {
 			n.SubmitBlockToCenter(newBlock)
 		} else {
+			log.Debug("packer broadcast block", "id", shortID(newBlock.Header().ID()), "number", newBlock.Header().Number())
 			n.comm.BroadcastBlock(newBlock)
+			log.Debug("packer broadcast block done", "id", shortID(newBlock.Header().ID()), "number", newBlock.Header().Number()
 		}
 
 		var totalReward = big.NewFloat(0.0)
