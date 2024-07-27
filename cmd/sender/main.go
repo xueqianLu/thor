@@ -28,8 +28,8 @@ type AccountInfo struct {
 	Private string `json:"private"`
 }
 
-const (
-	chainTag = 0xEB
+var (
+	chainTag byte = 0x00
 )
 
 // implement function load account
@@ -51,6 +51,8 @@ func main() {
 	tc := time.NewTicker(time.Second * 5)
 	nonce := uint64(time.Now().Unix())
 	defer tc.Stop()
+
+	chainTag = getChainTag(*url)
 	for {
 		select {
 		case <-tc.C:
