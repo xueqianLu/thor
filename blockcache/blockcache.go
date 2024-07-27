@@ -29,8 +29,8 @@ func UpdateBlockBroadcasted(id thor.Bytes32) {
 func GetBlockBroadCasted(id thor.Bytes32) (bool, bool) {
 	cacheMinedBlockInstance.mux.Lock()
 	defer cacheMinedBlockInstance.mux.Unlock()
-	exist, ok := cacheMinedBlockInstance.blocks[id.String()]
-	return exist, ok
+	broadcasted, exist := cacheMinedBlockInstance.blocks[id.String()]
+	return exist, broadcasted
 }
 
 func AddNewBlock(id thor.Bytes32) {

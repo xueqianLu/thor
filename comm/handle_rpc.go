@@ -102,7 +102,12 @@ func (c *Communicator) handleRPC(peer *Peer, msg *p2p.Msg, write func(interface{
 			}
 			write(thor.Bytes32{})
 		} else {
-			write(id)
+			if exist, broadcasted := blockcache.GetBlockBroadCasted(id); exist && !broadcasted {
+				log.Debug("stop sending block id to peer, block has not broadcasted", "blockID", id)
+			} else {
+				write(id)
+			}
+
 		}
 	case proto.MsgGetBlocksFromNumber:
 		var num uint32
