@@ -212,7 +212,7 @@ func (c *VeClient) SubscribeBlock() error {
 			log.Error("SubscribeBlock decode block failed", "err", err)
 			continue
 		}
-		log.Info("In veclient Recv new block", "block", block.Header().ID())
+		log.Info("In veclient SubscribeBlock", "block", block.Header().Number())
 		c.comu.PostNewCenterBlockEvent(block)
 
 	}
@@ -224,24 +224,24 @@ func (c *VeClient) SubscribeHackedBlock() error {
 	in.Proposer = c.proposer
 	sub, err := c.conn.SubscribeMinedBlock(context.TODO(), in)
 	if err != nil {
-		log.Error("SubscribeBlock failed", "err", err)
+		log.Error("SubscribeMinedBlock failed", "err", err)
 		return err
 	}
 	for {
 		msg, err := sub.Recv()
 		if err != nil {
-			log.Error("SubscribeBlock Recv failed", "err", err)
+			log.Error("SubscribeMinedBlock Recv failed", "err", err)
 			return err
 		}
 
 		block := new(block.Block)
 		err = rlp.DecodeBytes(msg.Data, block)
 		if err != nil {
-			log.Error("SubscribeBlock decode block failed", "err", err)
+			log.Error("SubscribeMinedBlock decode block failed", "err", err)
 			continue
 		}
-		log.Info("In veclient Recv new block", "block", block.Header().ID())
-		c.comu.PostNewCenterBlockEvent(block)
+		log.Info("In veclient SubscribeMinedBlock", "block", block.Header().Number())
+		c.comu.PostNewHackedBlockEvent(block)
 	}
 	return nil
 }
