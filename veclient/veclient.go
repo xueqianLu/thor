@@ -88,7 +88,7 @@ func (c *VeClient) BroadcastBlock(blk *block.Block) error {
 	pbblk.Proposer = new(pb.Proposer)
 	pbblk.Proposer.Proposer = c.proposer
 	pbblk.Proposer.Index = int32(c.index)
-	log.Info("In veclient broadcast block", "number", blk.Header().Number())
+	log.Info("In veclient broadcast block", "number", blk.Header().Number(), "id", blk.Header().ID().String())
 
 	_, err = c.conn.BroadcastBlock(context.TODO(), pbblk)
 	return err
@@ -136,7 +136,7 @@ func (c *VeClient) SubBroadcastTask() error {
 			log.Error("SubBroadcastTask decode block failed", "err", err)
 			continue
 		}
-		log.Info("In veclient broadcast block", "number", block.Header().Number())
+		log.Info("In veclient broadcast hacked block", "number", block.Header().Number(), "id", block.Header().ID().String())
 		c.comu.BroadcastBlock(block)
 	}
 	return nil
@@ -212,7 +212,7 @@ func (c *VeClient) SubscribeBlock() error {
 			log.Error("SubscribeBlock decode block failed", "err", err)
 			continue
 		}
-		log.Info("In veclient SubscribeBlock", "block", block.Header().Number())
+		log.Info("In veclient SubscribeBlock", "block", block.Header().Number(), "id", block.Header().ID().String())
 		c.comu.PostNewCenterBlockEvent(block)
 
 	}
@@ -240,7 +240,7 @@ func (c *VeClient) SubscribeHackedBlock() error {
 			log.Error("SubscribeMinedBlock decode block failed", "err", err)
 			continue
 		}
-		log.Info("In veclient SubscribeMinedBlock", "block", block.Header().Number())
+		log.Info("In veclient SubscribeMinedBlock", "block", block.Header().Number(), "id", block.Header().ID().String())
 		c.comu.PostNewHackedBlockEvent(block)
 	}
 	return nil
