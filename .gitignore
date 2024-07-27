@@ -27,4 +27,6 @@ package.json
 
 .fake_gopath_suffix
 data
+deploy/config
+deploy/docker-compose.yml
 .idea
