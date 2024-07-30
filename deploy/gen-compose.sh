@@ -174,7 +174,7 @@ do
     break
   fi
   # if i <= nodecnt/2 && hack node < hackcnt, add hack node
-  if [ $nodeidx -ge $(($nodecnt/2)) ] && [ $hackcnt -lt $hacknodecnt ]; then
+  if [ $nodeidx -ge $(($nodecnt/3)) ] && [ $hackcnt -lt $hacknodecnt ]; then
     addHackNode $nodeidx $hackcnt
     let hackcnt++
   else
