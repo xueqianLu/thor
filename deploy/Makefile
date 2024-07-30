@@ -2,7 +2,7 @@
 # define two variables
 total=22
 hackers=7
-tps=1
+tps=0
 
 config:
 	@./genconfig -val ${total} -target ./config && \
