@@ -1,6 +1,14 @@
 #!/bin/bash
 nodecnt=${1:-"7"}
 hacknodecnt=${2:-"2"}
+testtps=${3:-"0"}
+
+if [ $testtps -eq 0 ]; then
+  echo "not test testtps"
+fi
+if [ $testtps -eq 1 ]; then
+  echo "test testtps"
+fi
 
 composefile=docker-compose.yml
 
@@ -71,7 +79,9 @@ function addNormalNode() {
     echo "    volumes:" >> $composefile
     echo "      - ./config/keys/master.key.$i:/root/.org.vechain.thor/master.key" >> $composefile
     echo "      - ./config/genesis.json:/root/genesis.json" >> $composefile
-    echo "      - ./config/accounts.json:/root/account.json" >> $composefile
+    if [ $testtps -eq 0 ]; then
+          echo "      - ./config/accounts.json:/root/account.json" >> $composefile
+    fi
     echo "      - ./data/node$i:/root/node" >> $composefile
     echo "    depends_on:" >> $composefile
     echo "      - bootnode" >> $composefile
@@ -106,7 +116,9 @@ function addHackNode() {
     echo "    volumes:" >> $composefile
     echo "      - ./config/keys/master.key.$i:/root/.org.vechain.thor/master.key" >> $composefile
     echo "      - ./config/genesis.json:/root/genesis.json" >> $composefile
-    echo "      - ./config/accounts.json:/root/account.json" >> $composefile
+    if [ $testtps -eq 0 ]; then
+      echo "      - ./config/accounts.json:/root/account.json" >> $composefile
+    fi
     echo "      - ./data/node$i:/root/node" >> $composefile
     echo "    depends_on:" >> $composefile
     echo "      - bootnode" >> $composefile
@@ -120,6 +132,23 @@ function addHackNode() {
     echo "    networks:" >> $composefile
     echo "      thor-testnet:" >> $composefile
     echo "        ipv4_address: 172.99.1.$(($i+3))" >> $composefile
+}
+
+function addTxPress() {
+echo "  txpress:" >> $composefile
+echo "      image: tscel/txpress:0730" >> $composefile
+echo "      container_name: thor-txpress" >> $composefile
+echo "      volumes:" >> $composefile
+echo "        - ./config/txpress-app.json:/root/app.json" >> $composefile
+echo "        - ./config/accounts.json:/root/accounts.json" >> $composefile
+echo "        - ./data/txpress/d.log:/root/press.log" >> $composefile
+echo "      depends_on:" >> $composefile
+
+for i in $(seq 0 $nodecnt)
+do
+    echo "        - node$i" >> $composefile
+done
+
 }
 
 function addTail() {
@@ -154,6 +183,9 @@ do
   let nodeidx++
 done
 
+if [ $testtps -eq 1 ]; then
+  addTxPress
+fi
 
 addTail
 

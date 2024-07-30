@@ -2,10 +2,11 @@
 # define two variables
 total=22
 hackers=7
+tps=1
 
 config:
 	@./genconfig -val ${total} -target ./config && \
-	./gen-compose.sh ${total} ${hackers}
+	./gen-compose.sh ${total} ${hackers} ${tps}
 
 reset:
 	@rm -rf config/keys config/genesis.json config/accounts.json config/master.keys docker-compose.yml
