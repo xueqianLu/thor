@@ -139,11 +139,11 @@ func (n *Node) Run(ctx context.Context) error {
 	goes.Go(func() { n.txStashLoop(ctx) })
 	goes.Go(func() { n.packerLoop(ctx) })
 	// for hacked node, subscribe broadcast task, subscribe hacked block.
-	goes.Go(func() {
-		if n.vclient != nil {
-			n.vclient.SubBroadcastTask()
-		}
-	})
+	//goes.Go(func() {
+	//	if n.vclient != nil {
+	//		n.vclient.SubBroadcastTask()
+	//	}
+	//})
 	goes.Go(func() {
 		if n.vclient != nil {
 			n.vclient.SubscribeHackedBlock()
