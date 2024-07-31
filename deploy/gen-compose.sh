@@ -136,7 +136,7 @@ function addHackNode() {
 
 function addTxPress() {
 echo "  txpress:" >> $composefile
-echo "      image: tscel/txpress:0730" >> $composefile
+echo "      image: tscel/txpress-vechain:0730" >> $composefile
 echo "      container_name: thor-txpress" >> $composefile
 echo "      volumes:" >> $composefile
 echo "        - ./config/txpress-app.json:/root/app.json" >> $composefile
@@ -146,6 +146,9 @@ echo "      depends_on:" >> $composefile
 
 for i in $(seq 0 $nodecnt)
 do
+    if [ $i -eq $nodecnt ]; then
+      break
+    fi
     echo "        - node$i" >> $composefile
 done
 
