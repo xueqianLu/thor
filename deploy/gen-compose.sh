@@ -138,6 +138,7 @@ function addTxPress() {
 echo "  txpress:" >> $composefile
 echo "      image: tscel/txpress-vechain:0730" >> $composefile
 echo "      container_name: thor-txpress" >> $composefile
+echo "      entrypoint: /usr/bin/txpress --start --log /root/press.log" >> $composefile
 echo "      volumes:" >> $composefile
 echo "        - ./config/txpress-app.json:/root/app.json" >> $composefile
 echo "        - ./config/accounts.json:/root/accounts.json" >> $composefile
