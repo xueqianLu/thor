@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"flag"
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -10,28 +11,23 @@ import (
 )
 
 var (
-	restUrl = flag.String("url", "http://localhost:8669", "rest url")
-	report  = flag.String("report", "/root/node/report.csv", "report file")
+	restUrl     = flag.String("url", "http://13.228.149.45:10005", "rest url")
+	report      = flag.String("report", "/root/node/report.csv", "report file")
+	nodeNum     = flag.Int("number", 22, "node number")
+	blockHeight = flag.Int("height", 360, "block height")
 )
 
-var (
-	nodeBenefitList = []struct {
-		nodeName string
-		benefit  string
-	}{
-		{"node0", "0x0000000000000000000000000000000000000010"},
-		{"node1", "0x0000000000000000000000000000000000000011"},
-		{"node2", "0x0000000000000000000000000000000000000012"},
-		{"node3", "0x0000000000000000000000000000000000000013"},
-		{"node4", "0x0000000000000000000000000000000000000014"},
-		{"node5", "0x0000000000000000000000000000000000000015"},
-		{"node6", "0x0000000000000000000000000000000000000016"},
-	}
-)
+type nodeBenefit = struct {
+	nodeName string
+	benefit  string
+}
 
 func main() {
 	flag.Parse()
 	height := bestBlock(*restUrl).Number
+	if height > uint32(*blockHeight) {
+		height = uint32(*blockHeight)
+	}
 	f, err := os.OpenFile(*report, os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
 	if err != nil {
 		return
@@ -39,16 +35,38 @@ func main() {
 	defer func() {
 		f.Close()
 	}()
+
 	write := csv.NewWriter(f)
-	write.Write([]string{"block", "node0", "node1", "node2", "node3", "node4", "node5", "node6"})
+	nodeBenefitList := make([]nodeBenefit, 0)
+	head := []string{"block"}
+	for i := 0; i < *nodeNum; i++ {
+		nodeBenefit := nodeBenefit{}
+		nodeBenefit.nodeName = "node" + strconv.Itoa(i)
+		nodeBenefit.benefit = "0x" + fmt.Sprintf("%040d", i+10)
+		nodeBenefitList = append(nodeBenefitList, nodeBenefit)
+		head = append(head, nodeBenefit.nodeName)
+	}
+
+	write.Write(head)
 	for i := uint32(0); i < height; i++ {
+
 		record := make([]string, 0)
 		record = append(record, strconv.Itoa(int(i)))
 		for _, node := range nodeBenefitList {
 			acc := accountInfo(*restUrl, node.benefit, strconv.Itoa(int(i)))
 			energy := big.Int(acc.Energy)
-			record = append(record, energy.Text(10))
-			log.Printf("%s has benefit %v at block \t%d", node.nodeName, energy.Text(10), i)
+			//处理金额
+			energyFloat, err := strconv.ParseFloat(energy.Text(10), 64)
+			if err != nil {
+				log.Fatalf("strconv.ParseFloat err: %v", err)
+				return
+			}
+			totalReward := big.NewFloat(energyFloat)
+			totalReward.Quo(totalReward, big.NewFloat(1e18))
+			totalRewardStr := totalReward.Text('f', 4)
+
+			record = append(record, totalRewardStr)
+			log.Printf("%s has benefit %v at block \t%d", node.nodeName, totalRewardStr, i)
 		}
 		write.Write(record)
 	}

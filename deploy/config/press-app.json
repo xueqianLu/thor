@@ -8,7 +8,10 @@
   "base-count": 10,
   "interval": 1,
   "batch": 180,
+  "round": 8,
   "amount": 10000000,
   "accounts":"accounts.json",
+  "begin-to-start": 10,
+  "inc-rate": 50,
   "receive_addr": "0x8e0cd8dC765f8a69703ca7b56cee9802080E4052"
 }

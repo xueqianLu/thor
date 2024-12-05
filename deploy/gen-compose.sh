@@ -136,17 +136,29 @@ function addHackNode() {
 
 function addTxPress() {
 echo "  txpress:" >> $composefile
-echo "      image: tscel/txpress:0730" >> $composefile
-echo "      container_name: thor-txpress" >> $composefile
-echo "      volumes:" >> $composefile
-echo "        - ./config/txpress-app.json:/root/app.json" >> $composefile
-echo "        - ./config/accounts.json:/root/accounts.json" >> $composefile
-echo "        - ./data/txpress/d.log:/root/press.log" >> $composefile
-echo "      depends_on:" >> $composefile
+echo "    image: tscel/txpress-vechain:0730" >> $composefile
+echo "    container_name: thor-txpress" >> $composefile
+echo "    entrypoint: /usr/bin/txpress --start --log /root/data/press.log" >> $composefile
+echo "    volumes:" >> $composefile
+echo "      - ./config/press-app.json:/root/app.json" >> $composefile
+echo "      - ./config/accounts.json:/root/accounts.json" >> $composefile
+echo "      - ./data/txpress:/root/data" >> $composefile
+echo "    deploy:" >> $composefile
+echo "      restart_policy:" >> $composefile
+echo "        condition: on-failure" >> $composefile
+echo "        delay: 15s" >> $composefile
+echo "        max_attempts: 100" >> $composefile
+echo "        window: 120s" >> $composefile
+echo "    networks:" >> $composefile
+echo "      - thor-testnet" >> $composefile
+echo "    depends_on:" >> $composefile
 
 for i in $(seq 0 $nodecnt)
 do
-    echo "        - node$i" >> $composefile
+    if [ $i -eq $nodecnt ]; then
+      break
+    fi
+    echo "      - node$i" >> $composefile
 done
 
 }
