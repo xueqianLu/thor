@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/vechain/thor/cmd/utils"
 	"log"
+	"strconv"
 )
 
 var (
@@ -15,6 +16,8 @@ var (
 func main() {
 	flag.Parse()
 	var history = make(map[int]map[string]int)
+	var honest = make(map[int]int)
+	var hacker = make(map[int]int)
 	list := make([]int, 0)
 
 	for i := 0; i < *blockHeight; i++ {
@@ -24,6 +27,8 @@ func main() {
 		}
 		epoch := int(blk.Number) / 180
 		signer := blk.Beneficiary.String()
+		// signer latest 2 bytes.
+
 		if _, ok := history[epoch]; !ok {
 			history[epoch] = make(map[string]int)
 			history[epoch][signer] = 1
@@ -31,12 +36,26 @@ func main() {
 		} else {
 			history[epoch][signer]++
 		}
+		singerIdx, _ := strconv.Atoi(signer[len(signer)-2:])
+		singerIdx -= 10
+		if singerIdx >= 7 && singerIdx <= 15 {
+			hacker[epoch]++
+		} else {
+			honest[epoch]++
+		}
+
 	}
 	log.Printf("collect finished")
-	for _, epoch := range list {
-		for signer, count := range history[epoch] {
-			log.Printf("epoch %d, signer %s block %d\n", epoch, signer, count)
-		}
+	//for _, epoch := range list {
+	//	for signer, count := range history[epoch] {
+	//		log.Printf("epoch %d, signer %s block %d\n", epoch, signer, count)
+	//	}
+	//}
+	for epoch, count := range honest {
+		log.Printf("epoch %d honest block %d\n", epoch, count)
+	}
+	for epoch, count := range hacker {
+		log.Printf("epoch %d hacker block %d\n", epoch, count)
 	}
 	return
 }
