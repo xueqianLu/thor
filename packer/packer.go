@@ -106,9 +106,9 @@ func (p *Packer) Schedule(parent *chain.BlockSummary, nowTimestamp uint64) (flow
 		if err != nil {
 			return nil, err
 		}
-		geneTime := p.repo.GenesisBlock().Header().Timestamp()
-		sched, err = poa.NewSchedulerSimp(p.nodeMaster, proposers, parent.Header.Number(), parent.Header.Timestamp(), seed, geneTime)
-		//sched, err = poa.NewSchedulerV2(p.nodeMaster, proposers, parent.Header.Number(), parent.Header.Timestamp(), seed)
+		//geneTime := p.repo.GenesisBlock().Header().Timestamp()
+		//sched, err = poa.NewSchedulerSimp(p.nodeMaster, proposers, parent.Header.Number(), parent.Header.Timestamp(), seed, geneTime)
+		sched, err = poa.NewSchedulerV2(p.nodeMaster, proposers, parent.Header.Number(), parent.Header.Timestamp(), seed)
 	}
 	if err != nil {
 		return nil, err

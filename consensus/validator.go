@@ -192,9 +192,9 @@ func (c *Consensus) validateProposer(header *block.Header, parent *block.Header,
 		if err != nil {
 			return nil, err
 		}
-		geneTime := c.repo.GenesisBlock().Header().Timestamp()
-		//sched, err = poa.NewSchedulerV2(signer, proposers, parent.Number(), parent.Timestamp(), seed)
-		sched, err = poa.NewSchedulerSimp(signer, proposers, parent.Number(), parent.Timestamp(), seed, geneTime)
+		//geneTime := c.repo.GenesisBlock().Header().Timestamp()
+		sched, err = poa.NewSchedulerV2(signer, proposers, parent.Number(), parent.Timestamp(), seed)
+		//sched, err = poa.NewSchedulerSimp(signer, proposers, parent.Number(), parent.Timestamp(), seed, geneTime)
 	}
 	if err != nil {
 		return nil, consensusError(fmt.Sprintf("block signer invalid: %v %v", signer, err))
