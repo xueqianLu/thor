@@ -23,6 +23,7 @@ func main() {
 	for i := 0; i < *blockHeight; i++ {
 		blk := utils.BlockByNumber(*restUrl, int64(i))
 		if blk == nil {
+			log.Printf("block %d not found\n", i)
 			continue
 		}
 		epoch := int(blk.Number) / 180
@@ -38,6 +39,7 @@ func main() {
 		}
 		singerIdx, _ := strconv.Atoi(signer[len(signer)-2:])
 		singerIdx -= 10
+		log.Printf("epoch %d, signer %s, block %d\n", epoch, signer, history[epoch][signer])
 		if singerIdx >= 7 && singerIdx <= 15 {
 			hacker[epoch]++
 		} else {

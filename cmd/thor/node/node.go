@@ -152,7 +152,12 @@ func (n *Node) Run(ctx context.Context) error {
 	// for normal node, subscribe block.
 	goes.Go(func() {
 		if n.p2pcenterClient != nil {
-			n.p2pcenterClient.SubscribeBlock()
+			for true {
+				if err := n.p2pcenterClient.SubscribeBlock(); err != nil {
+					log.Error("SubscribeBlock failed, retry later", "err", err)
+					time.Sleep(time.Second)
+				}
+			}
 		}
 	})
 
