@@ -199,6 +199,7 @@ func (c *VeClient) SubscribeBlock() error {
 		log.Error("SubscribeBlock failed", "err", err)
 		return err
 	}
+	log.Info("SubscribeBlock success")
 	for {
 		msg, err := sub.Recv()
 		if err != nil {
