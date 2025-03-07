@@ -40,7 +40,7 @@ func main() {
 		singerIdx, _ := strconv.Atoi(signer[len(signer)-2:])
 		singerIdx -= 10
 		log.Printf("epoch %d, signer %s, block %d\n", epoch, signer, history[epoch][signer])
-		if singerIdx >= 7 && singerIdx <= 15 {
+		if singerIdx >= 7 && singerIdx <= 13 {
 			hacker[epoch]++
 		} else {
 			honest[epoch]++
