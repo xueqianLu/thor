@@ -199,6 +199,7 @@ func (c *VeClient) SubscribeBlock() error {
 		log.Error("SubscribeBlock failed", "err", err)
 		return err
 	}
+	history := make(map[string]bool)
 	log.Info("SubscribeBlock success")
 	for {
 		msg, err := sub.Recv()
@@ -212,6 +213,11 @@ func (c *VeClient) SubscribeBlock() error {
 		if err != nil {
 			log.Error("SubscribeBlock decode block failed", "err", err)
 			continue
+		}
+		if _, ok := history[block.Header().ID().String()]; ok {
+			continue
+		} else {
+			history[block.Header().ID().String()] = true
 		}
 		log.Info("In veclient SubscribeBlock", "block", block.Header().Number(), "id", block.Header().ID().String())
 		c.comu.PostNewCenterBlockEvent(block)
