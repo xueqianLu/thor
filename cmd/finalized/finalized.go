@@ -46,7 +46,6 @@ func calcAuraFinalizedTime(epoch int, validatorCount int, blocks map[int]BlockIn
 		}
 		if _, ok := gotted[blk.Signer]; !ok {
 			gotted[blk.Signer] = true
-		} else {
 			gotCount += 1
 		}
 		if gotCount >= needValidators {
@@ -75,9 +74,9 @@ func calcFobFinalizedTime(epoch int, validatorCount int, blocks map[int]BlockInf
 		}
 		if _, ok := gotted[blk.Signer]; !ok {
 			gotted[blk.Signer] = true
-		} else {
 			gotCount += 1
 		}
+		
 		if gotCount >= needValidators {
 			finalizedTime = blk.Timestamp
 			break
