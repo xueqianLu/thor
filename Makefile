@@ -12,7 +12,7 @@ MAJOR = $(shell go version | cut -d' ' -f3 | cut -b 3- | cut -d. -f1)
 MINOR = $(shell go version | cut -d' ' -f3 | cut -b 3- | cut -d. -f2)
 export GO111MODULE=on
 
-.PHONY: thor disco all clean test sender query
+.PHONY: thor disco all clean test sender query finalized
 
 thor:| go_version_check
 	@echo "building $@..."
@@ -22,6 +22,11 @@ thor:| go_version_check
 sender:
 	@echo "building $@..."
 	@go build -v -o $(CURDIR)/bin/$@ ./cmd/sender
+	@echo "done. executable created at 'bin/$@'"
+
+finalized:
+	@echo "building $@..."
+	@go build -v -o $(CURDIR)/bin/$@ ./cmd/finalized
 	@echo "done. executable created at 'bin/$@'"
 
 query:
