@@ -23,9 +23,10 @@ type BlockInfo struct {
 }
 
 func getHackSignerIdx(validatorCount int) (int, int) {
+	offset := 10
 	start := validatorCount / 3
 	end := start + validatorCount/3 - 1
-	return start, end
+	return start + offset, end + offset
 }
 
 func calcAuraFinalizedTime(epoch int, validatorCount int, blocks map[int]BlockInfo) (int64, bool) {
@@ -76,7 +77,7 @@ func calcFobFinalizedTime(epoch int, validatorCount int, blocks map[int]BlockInf
 			gotted[blk.Signer] = true
 			gotCount += 1
 		}
-		
+
 		if gotCount >= needValidators {
 			finalizedTime = blk.Timestamp
 			break
